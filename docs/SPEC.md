@@ -107,13 +107,6 @@ Rewritten on 14 Nov. Screen recording at 1440×900, captions burned in, no voice
 - Rehearse five times. Count the captions: about 2.5 words a second is the most a viewer reads.
 - Keep it to 30 s or less, with English subtitles, public. Re-check the 2026 Project Submission Guide first.
 
----|---|---|---|
-| 0–9 s | Burn Twin | Press "Drain oxygen". The Earth flame dies at 15.4%. The orbit flame turns blue, pulses, and dies at 13.61%. The result banner appears. | "Same PMMA rod. On Earth it goes out at 15.4% oxygen. In orbit, NASA's data says it keeps burning to about 13.6%." |
-| 9–14 s | Audit bar to SUMMARIZE | The counters tick up; click "Quarantined"; anomalous tiles fly into the quarantine bay | "We audited all 129 ISS tests in NASA's raw data and quarantined the anomalies." (Use real counts from the CSV.) |
-| 14–19 s | RANK | Ignition race plays; one weight slider moves; the leaderboard reorders | "NASA's Earth test gives the igniter about 25 s. In orbit, ignitions took up to 230 s." |
-| 19–26 s | Lab Partner and INTERPRET | Click the suggested question "Would a Test M5 fire be dangerous in a small cabin?". The simulator runs; CO crosses the 55 ppm line. | "Lab Partner runs NASA's own models and cites every answer." |
-| 26–30 s | Close card | none | "ZERO-DRAFT. Every number traced to NASA data." Then the URL. |
-
 ---
 
 ## 4. App shell and feature overview
@@ -364,7 +357,7 @@ Moving the O2 slider during a drain stops the drain.
 | Concurrent and stagnation rods together: median 539 (18 tests) | concurrent rods about 550. The report doesn't say how it grouped stagnation tests; say so on screen. | `bass2.co.550` |
 | Opposed rods: median 118, ranging 23 to 389 (18 tests) | "very nonlinear" | `bass2.co.opposed-rods` |
 | Lowest final O2 with confirmed burning: 13.6% (O4) | flames survived to 13.6% | `bass2.ign.survive-13.6`, `bass2.note.o4` |
-| Lowest final O2 in the whole file: 13.5% (O12) | O12 had no sustained flame at any flow | `bass2.note.o12` |
+| Lowest usable final O2: 13.5% (O12) | O12 had no sustained flame at any flow | `bass2.note.o12` |
 
 **F2b. AI test-outcome reader (P1, built in M7):**
 - Gemini reads NASA's test observations column (`bass2.table.observations`) on the Appendix A pages (PDF pp. 111–121).

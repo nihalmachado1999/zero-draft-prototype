@@ -26,6 +26,13 @@ export type CompleteRequest = {
   temperature?: number
   /** Give up after this long, in ms. Defaults to 60 s. */
   timeoutMs?: number
+  /**
+   * Pipeline scripts only. On a rate limit (429), wait as long as the provider asks (60 s at
+   * most) and ask again, up to this many times; each try gets the full time limit. Unset, as the
+   * Lab Partner endpoint leaves it, a 429 gets only the two short retries: a visitor never waits
+   * a minute for an answer.
+   */
+  rateLimitRetries?: number
 }
 
 export type CompleteResult = {
@@ -67,6 +74,24 @@ function isBusy(error: unknown): boolean {
 
 const RETRY_DELAYS_MS = [800, 2000]
 
+const isRateLimit = (error: unknown) =>
+  /\b429\b|RESOURCE_EXHAUSTED|rate limit/i.test(error instanceof Error ? error.message : String(error))
+
+/** The longest a pipeline script waits out one rate limit. */
+export const RATE_LIMIT_MAX_WAIT_MS = 60_000
+
+/**
+ * How long a rate-limit reply asks us to wait, from its own words ("Please try again in 7.66s",
+ * "in 1m26.4s", "in 350ms", "retry in 34s"), plus a second's margin; 30 s when it doesn't say.
+ * Never under 1 s or over 60 s.
+ */
+export function rateLimitWaitMs(message: string): number {
+  const match = /(?:try again|retry) in\s+(?:(\d+(?:\.\d+)?)h)?(?:(\d+(?:\.\d+)?)m(?!s))?(?:(\d+(?:\.\d+)?)s)?(?:(\d+(?:\.\d+)?)ms)?/i.exec(message)
+  const [h, m, sec, ms] = (match?.slice(1) ?? []).map((part) => (part === undefined ? 0 : Number(part)))
+  const asked = match && h + m + sec + ms > 0 ? h * 3_600_000 + m * 60_000 + sec * 1_000 + ms : 29_000
+  return Math.min(RATE_LIMIT_MAX_WAIT_MS, Math.max(1_000, Math.ceil(asked) + 1_000))
+}
+
 /** Which provider answers: Groq whenever its key is set. */
 export function provider(): 'groq' | 'gemini' {
   return process.env.GROQ_API_KEY?.trim() ? 'groq' : 'gemini'
@@ -74,9 +99,24 @@ export function provider(): 'groq' | 'gemini' {
 
 /**
  * One call to the LLM. A busy reply (503, 429) is retried twice, after 0.8 s and 2 s, as long as
- * the call's time limit allows; any other error is thrown at once.
+ * the call's time limit allows; any other error is thrown at once. A pipeline script can also
+ * ask to wait out rate limits (rateLimitRetries).
  */
 export async function complete(request: CompleteRequest): Promise<CompleteResult> {
+  for (let waited = 0; ; waited++) {
+    try {
+      return await completeWithin(request)
+    } catch (error) {
+      if (waited >= (request.rateLimitRetries ?? 0) || !isRateLimit(error)) throw error
+      const wait = rateLimitWaitMs(error instanceof Error ? error.message : String(error))
+      console.error(`  rate limited: waiting ${Math.round(wait / 1000)} s (try ${waited + 1} of ${request.rateLimitRetries})`)
+      await new Promise((resolve) => setTimeout(resolve, wait))
+    }
+  }
+}
+
+/** One call with its short retries, inside one time limit. */
+async function completeWithin(request: CompleteRequest): Promise<CompleteResult> {
   const deadline = Date.now() + (request.timeoutMs ?? 60_000)
   for (let attempt = 0; ; attempt++) {
     try {

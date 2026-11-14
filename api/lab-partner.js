@@ -807,15 +807,41 @@ function isBusy(error) {
 	return /\b(429|503)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|high demand|json_validate_failed|tool_use_failed/i.test(text);
 }
 var RETRY_DELAYS_MS = [800, 2e3];
+var isRateLimit = (error) => /\b429\b|RESOURCE_EXHAUSTED|rate limit/i.test(error instanceof Error ? error.message : String(error));
+/** The longest a pipeline script waits out one rate limit. */
+var RATE_LIMIT_MAX_WAIT_MS = 6e4;
+/**
+* How long a rate-limit reply asks us to wait, from its own words ("Please try again in 7.66s",
+* "in 1m26.4s", "in 350ms", "retry in 34s"), plus a second's margin; 30 s when it doesn't say.
+* Never under 1 s or over 60 s.
+*/
+function rateLimitWaitMs(message) {
+	const match = /(?:try again|retry) in\s+(?:(\d+(?:\.\d+)?)h)?(?:(\d+(?:\.\d+)?)m(?!s))?(?:(\d+(?:\.\d+)?)s)?(?:(\d+(?:\.\d+)?)ms)?/i.exec(message);
+	const [h, m, sec, ms] = (match?.slice(1) ?? []).map((part) => part === void 0 ? 0 : Number(part));
+	const asked = match && h + m + sec + ms > 0 ? h * 36e5 + m * 6e4 + sec * 1e3 + ms : 29e3;
+	return Math.min(RATE_LIMIT_MAX_WAIT_MS, Math.max(1e3, Math.ceil(asked) + 1e3));
+}
 /** Which provider answers: Groq whenever its key is set. */
 function provider() {
 	return process.env.GROQ_API_KEY?.trim() ? "groq" : "gemini";
 }
 /**
 * One call to the LLM. A busy reply (503, 429) is retried twice, after 0.8 s and 2 s, as long as
-* the call's time limit allows; any other error is thrown at once.
+* the call's time limit allows; any other error is thrown at once. A pipeline script can also
+* ask to wait out rate limits (rateLimitRetries).
 */
 async function complete(request) {
+	for (let waited = 0;; waited++) try {
+		return await completeWithin(request);
+	} catch (error) {
+		if (waited >= (request.rateLimitRetries ?? 0) || !isRateLimit(error)) throw error;
+		const wait = rateLimitWaitMs(error instanceof Error ? error.message : String(error));
+		console.error(`  rate limited: waiting ${Math.round(wait / 1e3)} s (try ${waited + 1} of ${request.rateLimitRetries})`);
+		await new Promise((resolve) => setTimeout(resolve, wait));
+	}
+}
+/** One call with its short retries, inside one time limit. */
+async function completeWithin(request) {
 	const deadline = Date.now() + (request.timeoutMs ?? 6e4);
 	for (let attempt = 0;; attempt++) try {
 		return await completeOnce({
