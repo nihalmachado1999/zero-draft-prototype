@@ -1,8 +1,8 @@
 {
  "generatedBy": "pipeline/scripts/lab-cache.ts",
- "generatedAt": "2026-11-14T10:15:47.839Z",
- "model": "gemini-3.5-flash-lite",
- "promptVersion": "lab-partner-tools@1+lab-partner-answer@3",
+ "generatedAt": "2026-11-14T11:56:45.747Z",
+ "model": "openai/gpt-oss-120b",
+ "promptVersion": "lab-partner-tools@1+lab-partner-answer@4",
  "answers": [
   {
    "id": "breezes",
@@ -14,7 +14,6 @@
       "id": "tool#1",
       "name": "set_burn_twin",
       "args": {
-       "o2Pct": 17,
        "flowCmS": 2,
        "rodMm": 6.35,
        "action": "drain"
@@ -114,12 +113,12 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "The report suggests that this zone of flow is unfortunately typical of spacecraft ventilation flows near surfaces.",
+      "text": "The report notes that the \"Goldilocks\" zone of flow is typical of spacecraft ventilation flows near surfaces, meaning gentle breezes can keep flames burning at lower oxygen levels than on Earth.",
       "supports": [
        {
         "kind": "quote",
         "chunkId": "c0310",
-        "quote": "This \"Goldilocks\" zone of flow is unfortunately typical of spacecraft ventilation flows near surfaces.",
+        "quote": "\"Goldilocks\" zone of flow is unfortunately typical of spacecraft ventilation flows near surfaces.",
         "sourceId": "nasa-tm-20210011385",
         "place": "BASS-II report, p. 76",
         "pdfPage": 84,
@@ -131,12 +130,44 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "The report indicates that the material remains flammable under the weak ventilation only obtainable in microgravity.",
+      "text": "In the model, at a gentle 2 cm/s airflow the orbit flame persists until 13.61 % O2, which is 1.79 points below the Earth limit of 15.4 % O2 for PMMA rods.",
+      "supports": [
+       {
+        "kind": "tool",
+        "ref": "tool#1.flowCmS",
+        "label": "Orbit airflow U, cm/s",
+        "claimId": "twin.orbit-limit"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.orbitLimitPct",
+        "label": "Orbit limit, % O2 (Eq. 6.1, model)",
+        "claimId": "twin.orbit-limit"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.earthLimitPct",
+        "label": "Earth limit, % O2 (1g, PMMA rods, 4 cm/s forced flow)",
+        "claimId": "bass2.flam.vs-1g"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.gapPts",
+        "label": "Points of O2 lower the orbit flame keeps burning than the Earth flame (model)",
+        "claimId": "twin.gap"
+       }
+      ]
+     }
+    },
+    {
+     "type": "sentence",
+     "sentence": {
+      "text": "Thus, even a mild cabin breeze can allow a microgravity flame to survive in oxygen concentrations that would extinguish the same material in normal gravity, increasing fire risk.",
       "supports": [
        {
         "kind": "quote",
         "chunkId": "c0310",
-        "quote": "indicating the material remains flammable under the weak ventilation only obtainable in microgravity.",
+        "quote": "the material remains flammable under the weak ventilation only obtainable in microgravity.",
         "sourceId": "nasa-tm-20210011385",
         "place": "BASS-II report, p. 76",
         "pdfPage": 84,
@@ -148,8 +179,8 @@
     {
      "type": "done",
      "refused": false,
-     "model": "gemini-3.5-flash-lite",
-     "promptVersion": "lab-partner-tools@1+lab-partner-answer@3"
+     "model": "openai/gpt-oss-120b",
+     "promptVersion": "lab-partner-tools@1+lab-partner-answer@4"
     }
    ]
   },
@@ -314,8 +345,17 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "Test M5 ran for a duration of 27.2 min as shown in the model.",
+      "text": "In Test M5 a 3-mm-thick, two-sided PMMA slab burned for the 27.2 min set, with oxygen dropping from 22.2 % to 19 % (model).",
       "supports": [
+       {
+        "kind": "quote",
+        "chunkId": "c0235",
+        "quote": "M5 3 2.2 2 10 0.071 27.2 22.2 19",
+        "sourceId": "nasa-tm-20210011385",
+        "place": "BASS-II report, p. 57",
+        "pdfPage": 65,
+        "reportPage": 57
+       },
        {
         "kind": "tool",
         "ref": "tool#1.durationMin",
@@ -324,8 +364,14 @@
        },
        {
         "kind": "tool",
-        "ref": "tool#1.flame",
-        "label": "What the flame does (model)",
+        "ref": "tool#1.o2StartPct",
+        "label": "Oxygen at the start, %",
+        "claimId": "cabin.model"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.o2EndPct",
+        "label": "Oxygen at the end, % (model)",
         "claimId": "cabin.model"
        }
       ]
@@ -334,31 +380,61 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "The BASS-II report states that Rick ignited while we were loss of signal and out of contact.",
+      "text": "The model predicts the peak carbon monoxide reached about 987 ppm, exceeding the long-term SMAC (10 ppm) at T+00:17 and the 1-hour SMAC (55 ppm) at T+01:31.",
       "supports": [
        {
-        "kind": "quote",
-        "chunkId": "c0454",
-        "quote": "Rick ignited while we were loss of signal and out of contact",
-        "sourceId": "nasa-tm-20210011385",
-        "place": "BASS-II report, p. 109",
-        "pdfPage": 117,
-        "reportPage": 109
+        "kind": "tool",
+        "ref": "tool#1.coPeakPpm",
+        "label": "Highest CO, ppm (model)",
+        "claimId": "cabin.model"
        },
        {
         "kind": "tool",
-        "ref": "tool#1.lossOfSignal",
-        "label": "NASA’s words, BASS-II report, p. 109",
-        "claimId": "bass2.note.m5-los"
+        "ref": "tool#1.smac10",
+        "label": "The long-term SMAC (10 ppm), model",
+        "claimId": "bass2.co.smac"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.smac55",
+        "label": "The 1-hour SMAC (55 ppm), model",
+        "claimId": "bass2.co.smac"
        }
       ]
      }
     },
     {
+     "type": "sentence",
+     "sentence": {
+      "text": "The CO sensor was over-ranged (>1,000 ppm) and the long burn caused damage to the downstream lower corner of the front window where a flow-duct leak existed.",
+      "supports": [
+       {
+        "kind": "tool",
+        "ref": "tool#1.coOverRange",
+        "label": "NASA’s words, BASS-II report, p. 7",
+        "claimId": "bass2.co.over-range"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.window",
+        "label": "NASA’s words, BASS-II report, p. 7",
+        "claimId": "bass2.m5.window"
+       }
+      ]
+     }
+    },
+    {
+     "type": "dropped",
+     "count": 1,
+     "reasons": [
+      "untraceable-number"
+     ]
+    },
+    {
      "type": "done",
      "refused": false,
-     "model": "gemini-3.5-flash-lite",
-     "promptVersion": "lab-partner-tools@1+lab-partner-answer@3"
+     "model": "openai/gpt-oss-120b",
+     "promptVersion": "lab-partner-tools@1+lab-partner-answer@4"
     }
    ]
   },
@@ -474,14 +550,8 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "In a small cabin of 3 m3, the model gives a peak CO of 82.2 ppm and shows that CO passes the 1-hour SMAC (55 ppm) at T+18:12, meaning the fire exceeds long-term and 1-hour spacecraft maximum allowable concentration limits.",
+      "text": "In the model, a small sealed cabin of 3 m3 with an opposed PMMA slab fire (Test M5) produces a peak CO of 82.2 ppm.",
       "supports": [
-       {
-        "kind": "tool",
-        "ref": "tool#1.volumeM3",
-        "label": "Sealed volume, m³",
-        "claimId": "cabin.model"
-       },
        {
         "kind": "tool",
         "ref": "tool#1.coPeakPpm",
@@ -490,9 +560,9 @@
        },
        {
         "kind": "tool",
-        "ref": "tool#1.smac55",
-        "label": "The 1-hour SMAC (55 ppm), model",
-        "claimId": "bass2.co.smac"
+        "ref": "tool#1.volumeM3",
+        "label": "Sealed volume, m³",
+        "claimId": "cabin.model"
        }
       ]
      }
@@ -500,12 +570,24 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "For a PMMA slab in BASS-II tests, the report suggests that combustion products from a fire of the scale of a BASS-II test would quickly be diluted, so that even within just the U.S. Lab (106-m3 pressurized volume), the CO levels in the lab would only be 1.5 ppm, well below spacecraft maximum allowable concentration (SMAC) values for even long-term exposure (10 ppm), let alone the 1 hour SMAC of 55 ppm.",
+      "text": "That peak exceeds both the long-term SMAC of 10 ppm and the 1-hour SMAC of 55 ppm, which the BASS-II report says are the spacecraft maximum allowable concentrations.",
       "supports": [
+       {
+        "kind": "tool",
+        "ref": "tool#1.smac10",
+        "label": "The long-term SMAC (10 ppm), model",
+        "claimId": "bass2.co.smac"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.smac55",
+        "label": "The 1-hour SMAC (55 ppm), model",
+        "claimId": "bass2.co.smac"
+       },
        {
         "kind": "quote",
         "chunkId": "c0036",
-        "quote": "combustion products from a fire of the scale of a BASS-II test would quickly be diluted, so that even within just the U.S. Lab (106-m3 pressurized volume), the CO levels in the lab would only be 1.5 ppm, well below spacecraft maximum allowable concentration (SMAC) values for even long-term exposure (10 ppm), let alone the 1 hour SMAC of 55 ppm",
+        "quote": "the CO levels in the lab would only be 1.5 ppm, well below spacecraft maximum allowable concentration (SMAC) values for even long-term exposure (10 ppm), let alone the 1 hour SMAC of 55 ppm",
         "sourceId": "nasa-tm-20210011385",
         "place": "BASS-II report, p. 8",
         "pdfPage": 16,
@@ -517,8 +599,8 @@
     {
      "type": "done",
      "refused": false,
-     "model": "gemini-3.5-flash-lite",
-     "promptVersion": "lab-partner-tools@1+lab-partner-answer@3"
+     "model": "openai/gpt-oss-120b",
+     "promptVersion": "lab-partner-tools@1+lab-partner-answer@4"
     }
    ]
   },
@@ -559,7 +641,7 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "The report suggests that spacecraft fire suppression efforts should be maintained until the burning material has cooled and stopped emitting vapors.",
+      "text": "The report suggests suppression should be maintained until the burning material has cooled and stopped emitting vapors.",
       "supports": [
        {
         "kind": "quote",
@@ -576,138 +658,8 @@
     {
      "type": "done",
      "refused": false,
-     "model": "gemini-3.5-flash-lite",
-     "promptVersion": "lab-partner-tools@1+lab-partner-answer@3"
-    }
-   ]
-  },
-  {
-   "id": "readings-39",
-   "question": "Why did some oxygen readings say 39%?",
-   "events": [
-    {
-     "type": "tool",
-     "result": {
-      "id": "tool#1",
-      "name": "navigate",
-      "args": {
-       "view": "summarize",
-       "params": {
-        "test": "P22b"
-       }
-      },
-      "view": "summarize",
-      "opensView": true,
-      "summary": "showed P22b in the quarantine bay",
-      "fields": [
-       {
-        "key": "test",
-        "label": "Test",
-        "value": "P22b"
-       },
-       {
-        "key": "pi",
-        "label": "Principal investigator",
-        "value": "Fernandez-Pello"
-       },
-       {
-        "key": "material",
-        "label": "Sample, as the CSV writes it",
-        "value": "3/8\" black rod"
-       },
-       {
-        "key": "o2InitPct",
-        "label": "Calibrated initial O2 in the CSV, %",
-        "value": 20
-       },
-       {
-        "key": "o2FinalPct",
-        "label": "Calibrated final O2 in the CSV, %",
-        "value": 39.1
-       },
-       {
-        "key": "quarantined",
-        "label": "In the quarantine bay",
-        "value": "yes: its final O2 is missing or physically impossible"
-       },
-       {
-        "key": "forensicMath",
-        "label": "ZERO-DRAFT’s audit: its arithmetic that reproduces the impossible value from NASA’s row",
-        "value": "19.1 + 20.0 = 39.1",
-        "claimId": "bass2.o2forensic.p22b"
-       },
-       {
-        "key": "forensicCause",
-        "label": "ZERO-DRAFT’s audit: why the value is impossible (our finding, not the report’s)",
-        "value": "the uncalibrated initial reading was blank, so the day’s offset became the whole initial reading, and was added to the final",
-        "claimId": "bass2.o2forensic.p22b"
-       },
-       {
-        "key": "appendixRow",
-        "label": "NASA’s words, BASS-II report, p. 107",
-        "value": "20.0 39.1 ---- 19.1",
-        "claimId": "bass2.o2forensic.p22b"
-       },
-       {
-        "key": "o2Columns",
-        "label": "NASA’s words, BASS-II report, p. 103",
-        "value": "Calibrated initial O2 vol% Calibrated final O2 vol% Initial O2 vol% Final O2 vol%",
-        "claimId": "bass2.table.o2-columns"
-       },
-       {
-        "key": "offsetRule",
-        "label": "NASA’s words, BASS-II report, p. 116",
-        "value": "The CSA-CP readings were then corrected for the offset from the MCA readings for that day to provide a calibrated O2 reading for each test.",
-        "claimId": "bass2.sensor.mca-offset"
-       }
-      ],
-      "claimIds": [
-       "bass2.o2forensic.p22b"
-      ]
-     }
-    },
-    {
-     "type": "sentence",
-     "sentence": {
-      "text": "ZERO-DRAFT's audit found that the uncalibrated initial reading was blank, so the day's offset became the whole initial reading, and was added to the final.",
-      "supports": [
-       {
-        "kind": "tool",
-        "ref": "tool#1.forensicCause",
-        "label": "ZERO-DRAFT’s audit: why the value is impossible (our finding, not the report’s)",
-        "claimId": "bass2.o2forensic.p22b"
-       }
-      ]
-     }
-    },
-    {
-     "type": "sentence",
-     "sentence": {
-      "text": "In BASS-II tests for test P22b, NASA's words in the BASS-II report, p. 107 show 20.0 39.1 ---- 19.1.",
-      "supports": [
-       {
-        "kind": "quote",
-        "chunkId": "c0433",
-        "quote": "200m 9.525-mm black rod -35 2 Opposed 5, 0.36, 0.34, 0.33, 0.32, 0.31, extinction 5 down to extinction 50 ---- NA NA N CL A -3 NA ---- F2 1,000 Cont 6 155 20.0 39.1 ---- 19.1 ---- 1.09 ---- 236 Extinguished at lower flow than",
-        "sourceId": "nasa-tm-20210011385",
-        "place": "BASS-II report, p. 107",
-        "pdfPage": 115,
-        "reportPage": 107
-       },
-       {
-        "kind": "tool",
-        "ref": "tool#1.appendixRow",
-        "label": "NASA’s words, BASS-II report, p. 107",
-        "claimId": "bass2.o2forensic.p22b"
-       }
-      ]
-     }
-    },
-    {
-     "type": "done",
-     "refused": false,
-     "model": "gemini-3.5-flash-lite",
-     "promptVersion": "lab-partner-tools@1+lab-partner-answer@3"
+     "model": "openai/gpt-oss-120b",
+     "promptVersion": "lab-partner-tools@1+lab-partner-answer@4"
     }
    ]
   }
