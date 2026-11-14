@@ -6,12 +6,15 @@
 // 2. Every claim with locator.file: its quote must be on that line of the file under
 //    pipeline/sources/<SOURCE-ID>/ (sourceId "psi-98" is folder "PSI-98").
 // 3. Every <Cite id="..."> in src/ must name a claim in src/data/claims.json.
+// 4. Every figure in src/lib/figures.ts: its image exists under public/, its check text is on its
+//    PDF page, and every claim it is shown with exists.
 // Exits with code 1 if anything fails.
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { extractText, getDocumentProxy } from 'unpdf'
 import type { Claim } from '../../src/lib/claims'
+import { CLAIM_FIGURES, FIGURES, pageHasFigure } from '../../src/lib/figures'
 import { normalize } from '../../src/lib/normalize'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url))
@@ -127,7 +130,28 @@ for (const path of sourceFiles(join(ROOT, 'src'))) {
 }
 const missingCites = [...citeIds].filter((id) => !ids.has(id)).length
 
+// 4: figures.
+let figuresPassed = 0
+for (const figure of Object.values(FIGURES)) {
+  let ok = true
+  if (!existsSync(join(ROOT, 'public', figure.src))) {
+    failures.push(`figure ${figure.id}: public/${figure.src} is missing`)
+    ok = false
+  }
+  const pages = await pdfPages(figure.sourceId)
+  if (!pageHasFigure(pages[figure.pdfPage - 1] ?? '', figure)) {
+    failures.push(`figure ${figure.id}: "${figure.pageText}" is not on PDF page ${figure.pdfPage}`)
+    ok = false
+  }
+  if (ok) figuresPassed++
+}
+for (const [claimId, figureIds] of Object.entries(CLAIM_FIGURES)) {
+  if (!ids.has(claimId)) failures.push(`figures: claim "${claimId}" doesn't exist`)
+  for (const id of figureIds) if (!FIGURES[id]) failures.push(`figures: "${claimId}" names no figure "${id}"`)
+}
+
 console.log(`Quotes checked: ${passed}/${checked}`)
+console.log(`Figures checked against their page: ${figuresPassed}/${Object.keys(FIGURES).length}`)
 console.log(`Cite ids used in src/: ${citeIds.size}, missing: ${missingCites}`)
 if (dynamicCites.length > 0) {
   console.log(`Cites with an id from a variable (not checkable here): ${dynamicCites.join('; ')}`)

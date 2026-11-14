@@ -1371,7 +1371,8 @@ var sources_default = [
 		"year": 2021,
 		"doi": null,
 		"url": "https://ntrs.nasa.gov/citations/20210011385",
-		"kind": "report"
+		"kind": "report",
+		"credit": "Eq. 6.1 (report p. 75) is shown as printed in NASA/TM-20210011385, Olson et al., NASA, 2021"
 	},
 	{
 		"id": "psi-25",
@@ -3486,10 +3487,12 @@ var ROD_DIAMETERS_MM = [
 ];
 /** The 3/2 factor in the stretch-rate definition. Quoted: bass2.flam.stretch-def (p. 75). */
 var STRETCH_FACTOR = 3 / 2;
-var EQ61_QUENCH_AMPLITUDE = 6;
-var EQ61_QUENCH_RATE = .5;
-var EQ61_BLOWOFF_SLOPE = .0167;
-var EQ61_OFFSET = 13.4;
+var [EQ61_QUENCH_AMPLITUDE, EQ61_QUENCH_RATE, EQ61_BLOWOFF_SLOPE, EQ61_OFFSET] = [
+	6,
+	.5,
+	.0167,
+	13.4
+];
 var TS_FACTOR = .7;
 /** Rod radius in cm from diameter in mm. */
 function rodRadiusCm(rodMm) {
@@ -3502,7 +3505,7 @@ function stretchRate(flowCmS, rodMm) {
 }
 /** Quenching branch of Eq. 6.1: 6·exp(−0.5a) + 13.4, % O2. */
 function quenchingBranch(a) {
-	return EQ61_QUENCH_AMPLITUDE * Math.exp(-.5 * a) + EQ61_OFFSET;
+	return EQ61_QUENCH_AMPLITUDE * Math.exp(-EQ61_QUENCH_RATE * a) + EQ61_OFFSET;
 }
 /** Blowoff branch of Eq. 6.1: 0.0167a + 13.4, % O2. At a = 0 it is 13.4 % (bass2.flam.derate). */
 function blowoffBranch(a) {

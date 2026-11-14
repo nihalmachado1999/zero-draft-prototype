@@ -22,11 +22,12 @@ export type RodMm = (typeof ROD_DIAMETERS_MM)[number]
 /** The 3/2 factor in the stretch-rate definition. Quoted: bass2.flam.stretch-def (p. 75). */
 const STRETCH_FACTOR = 3 / 2
 
-// Eq. 6.1, X_O2 = 6·exp(−0.5a) + 0.0167a + 13.4 (p. 75; branches: bass2.flam.eq61-branches). No quote yet.
-const EQ61_QUENCH_AMPLITUDE = 6
-const EQ61_QUENCH_RATE = 0.5
-const EQ61_BLOWOFF_SLOPE = 0.0167
-const EQ61_OFFSET = 13.4
+// Eq. 6.1, X_O2 = 6·exp(−0.5a) + 0.0167a + 13.4 (p. 75; branches: bass2.flam.eq61-branches). The PDF's
+// text layer garbles the equation, so it can't be a quoted claim: the drawer shows it as printed
+// (figures.ts, public/img/eq61-bass2-p75.png), check:claims finds these four numbers in this order
+// on its page, and figures.test.ts checks they are the ones below.
+export const EQ61_COEFFICIENTS = [6, 0.5, 0.0167, 13.4] as const
+const [EQ61_QUENCH_AMPLITUDE, EQ61_QUENCH_RATE, EQ61_BLOWOFF_SLOPE, EQ61_OFFSET] = EQ61_COEFFICIENTS
 
 // t_s = 0.7 r² / α_s (p. 68; bass2.ign.ts-def names it). The 0.7 is NASA's empirical factor,
 // "selected so that τ = 1 at the ignition limit" (bass2.ign.ts-factor, p. 68).

@@ -2,6 +2,8 @@ import { CircleAlert, CircleCheck, ExternalLink, X } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useId, useRef, type KeyboardEvent } from 'react'
 import { getClaim, getSource, sourceFolder, sourceLink, type Claim } from '../lib/claims'
+import { figuresFor } from '../lib/figures'
+import { ClaimFigure } from './ClaimFigure'
 import { Cite } from './Cite'
 import { FootnoteScope } from './FootnoteScope'
 import { SweptQuote } from './SweptQuote'
@@ -147,6 +149,9 @@ function ClaimDetails({ claim, sweepDelayMs }: { claim: Claim; sweepDelayMs: num
           {!claim.quote && status}
         </div>
       )}
+      {figuresFor(claim.id).map((figure) => (
+        <ClaimFigure key={figure.id} figure={figure} />
+      ))}
       {/* The citation itself, so Archivo throughout: mono is for numbers that are data. */}
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm leading-6">
         {source && (
