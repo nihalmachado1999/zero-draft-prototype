@@ -23,6 +23,8 @@ export const rankStore = {
   /** One slider. At least one weight always stays above 0 (risk.setWeight). */
   setWeight: (key: IndexKey, value: number) => commit(setWeight(weights, key, value)),
   reset: () => commit(EQUAL_WEIGHTS),
+  /** Puts back weights read earlier with get(): Lab Partner's Undo. */
+  restore: (snapshot: Weights) => commit(snapshot),
 }
 
 export function useWeights(): Weights {

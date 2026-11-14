@@ -7,7 +7,8 @@ import { FootnoteScope } from './FootnoteScope'
 import { SweptQuote } from './SweptQuote'
 
 type CitationDrawerProps = {
-  claimId: string | null
+  /** A claim id from claims.json, or a claim built on the spot (Lab Partner's quotes). */
+  target: string | Claim | null
   onClose: () => void
 }
 
@@ -19,13 +20,14 @@ const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1
  * emphasis phrase. Focus moves in and is trapped; Esc, the Close button or a click outside
  * closes it. Footnotes inside (a calculation's inputs) are numbered on their own.
  */
-export function CitationDrawer({ claimId, onClose }: CitationDrawerProps) {
+export function CitationDrawer({ target, onClose }: CitationDrawerProps) {
   const reduceMotion = useReducedMotion()
   const panelRef = useRef<HTMLElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const headingId = useId()
-  const open = claimId !== null
-  const claim = claimId === null ? undefined : getClaim(claimId)
+  const open = target !== null
+  const claimId = target === null ? null : typeof target === 'string' ? target : target.id
+  const claim = target === null ? undefined : typeof target === 'string' ? getClaim(target) : target
 
   // Move focus into the drawer when it opens or switches to another claim.
   useEffect(() => {

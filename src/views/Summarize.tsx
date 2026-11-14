@@ -127,7 +127,9 @@ function Explorer({ bass2, audit, params }: { bass2: Bass2File; audit: AuditFile
 
   return (
     <>
-      <div className="flex h-full min-h-[46rem] flex-col">
+      {/* At least one screen tall: stacked under the wall (the Lab Partner dock open), the bay and
+          an open "Show the math" make it taller, and it grows instead of running into what's below. */}
+      <div className="flex min-h-[max(100%,46rem)] flex-col">
         <SummaryHeader
           audit={audit}
           filters={filters}

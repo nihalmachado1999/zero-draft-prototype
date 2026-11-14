@@ -8,18 +8,21 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run build:api",
+    "build:api": "vite build --config vite.api.config.ts",
     "preview": "vite preview",
     "lint": "oxlint",
     "test": "vitest run",
     "check:claims": "tsx pipeline/scripts/check-claims.ts",
     "llm:smoke": "tsx pipeline/scripts/llm-smoke.ts",
+    "lab:ask": "tsx pipeline/scripts/lab-ask.ts",
+    "lab:cache": "tsx pipeline/scripts/lab-cache.ts",
     "data:bass2": "tsx pipeline/scripts/compile-bass2.ts",
     "pipeline:text": "echo not implemented yet",
     "pipeline:extract": "echo not implemented yet",
     "pipeline:verify": "echo not implemented yet",
     "pipeline:briefing": "echo not implemented yet",
-    "pipeline:chunks": "echo not implemented yet"
+    "pipeline:chunks": "tsx pipeline/scripts/chunks.ts"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

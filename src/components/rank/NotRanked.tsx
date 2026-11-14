@@ -127,7 +127,7 @@ export function NotRanked({ groups, unscored }: { groups: UnrankedGroup[]; unsco
           )
         })}
         {reasons.map((group) => (
-          <li key={group.family}>
+          <li key={group.family} data-lab-target={`rank.unranked.${group.family}`}>
             <p className="tabular-nums">
               {group.label}, {group.tests} tests
             </p>
@@ -137,7 +137,7 @@ export function NotRanked({ groups, unscored }: { groups: UnrankedGroup[]; unsco
       </ul>
 
       {findings.map((group) => (
-        <article key={group.family} className="flex flex-col gap-1.5">
+        <article key={group.family} data-lab-target={`rank.unranked.${group.family}`} className="flex flex-col gap-1.5">
           <h3 className="text-sm leading-5 font-semibold">{group.label}</h3>
           <p className="text-xs leading-4 text-muted tabular-nums">
             {group.tests} {group.tests === 1 ? 'test' : 'tests'}: <TestIds ids={group.testIds} />.{' '}

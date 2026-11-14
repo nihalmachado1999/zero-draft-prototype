@@ -52,7 +52,7 @@ export function FilterStrip({ filters, pis, domain }: FilterStripProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+    <div data-lab-target="summarize.filters" className="flex flex-wrap items-end gap-x-6 gap-y-4">
       <div className="flex flex-col gap-1">
         <label htmlFor={piId} className="mb-1 text-sm leading-5 text-muted">
           PI

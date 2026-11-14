@@ -24,6 +24,10 @@ Written Mon 9 Nov 2026. Event: Sat 14 to Sun 15 Nov 2026. Read `CLAUDE.md` first
 - LLM: Gemini through `@google/genai` (§7.3). A Claude Pro plan doesn't include API access.
 - The challenge's Resources tab is empty until 13 Nov. Check it then, and add any new NASA datasets to §8.5.
 
+**Found on 14 Nov (M6):**
+- The Gemini key is on the free tier: **20 requests a day per model**, and a Lab Partner question takes 2. That is about 10 live questions a day for everyone, judges included. Enable billing on the key's Google AI Studio project before deploying, or live questions will mostly show "Gemini's usage limit for this key is used up for now".
+- The suggested questions' cached answers were generated with `gemini-3.5-flash-lite`, because the `gemini-3.5-flash` quota was spent and the newer Flash models were overloaded. Five of six were kept after review; the lunar one asks live. Regenerate with Flash (`npm run lab:cache`), read every answer against its sources, then commit.
+
 **Still pending:**
 1. NASA sources for the ISS cabin atmosphere and lunar gravity (§8.4).
 2. Optional: Saffire-III's "Experimental Details" file from PSI. Its record says the sample details are in it (`psi100.details-file`). The earlier Saffire-III image zip is only a camera-calibration checkerboard; don't use it.
@@ -587,6 +591,13 @@ Each module belongs to one view: `set_burn_twin` to Overview, `filter_tests` to 
 - Cached questions work with the network off.
 - Every tool call changes the UI visibly and can be undone.
 
+**As built (M6):**
+- Six suggested questions: the five in M6's prompt plus "Why did some oxygen readings say 39%?" from the list above. A cached answer says "Cached answer" and has "Ask live", which asks the server the same question.
+- Answers stream as events: the stages ("Searching NASA's sources…", "Checking every quote and number…"), each tool as it runs, then each sentence once it has passed the checks. Sentences can't stream before they are checked, so the checked sentences arrive one by one.
+- On top of §7.1's checks, the server also drops a sentence that credits "the report" or "BASS-II" without citing them (a Zayac or FLEX quote is not BASS-II), and one with JSON braces in its text. The dock says how many sentences were dropped and why, never what they said.
+- Undo restores every store and the address as they were before that tool ran, so undoing a line also undoes the lines after it.
+- The checks prove every quote and number is real; they can't prove a sentence uses them correctly. During M6 a weaker model put the US Lab's 1.5 ppm into a small-cabin answer as if it applied there. The answer prompt now lists such traps, and every cached answer must be read before it is committed.
+
 ### F6. Citation drawer (P0, global)
 
 **`<Cite id>`** renders a scientific footnote: a small cyan superscript number, ¹ ² ³ in order of appearance on the current view (the header counts as part of every view; a claim cited twice keeps its number), in Archivo with no brackets. Hover or keyboard focus shows a one-line preview: the source's `short` name plus page, line or row ("BASS-II report, p. 76", "PSI-26, line 69", "PSI-25, row 129"); computed values say "Calculated from cited inputs". A click opens the drawer.
@@ -793,6 +804,13 @@ Pressure is stored in atm in the cabin model. The UI shows psia with kPa in brac
    - each number in a sentence appears in its supports
    - drop failing sentences, and refuse if none remain
 6. Return the verified sentences and the `uiActions`. The client applies them with undo.
+
+**As built (M6):**
+- `api/_src/lab-partner.ts` is the source; `npm run build:api` bundles it with everything it imports into `api/lab-partner.js`, which Vercel runs. Node's ES modules can't load `src/lib`'s extensionless imports on their own, so an unbundled function would fail on Vercel.
+- Prompts: `pipeline/prompts/lab-partner-tools.md` (call 1) and `lab-partner-answer.md` (call 2). Every answer records both versions.
+- Call 1 runs at the lowest thinking level. Call 2 does too: Gemini counts thinking against `maxOutputTokens`, and at a higher level it spent all 400 tokens thinking and returned nothing.
+- `llm.ts` retries a busy reply (503, 429) twice, after 0.8 s and 2 s, within the call's time limit.
+- The tools return their values rounded as the screen shows them, each with the claim behind it, and labelled "(model)", "NASA's words" or "ZERO-DRAFT's audit", so the answer credits each one correctly.
 
 ### 7.2 Pipeline (offline)
 

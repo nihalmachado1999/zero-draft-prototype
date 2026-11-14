@@ -119,8 +119,8 @@ export function QuarantineBay({ groups, order, switchOn, onQuarantine, ...slot }
   const count = groups.reduce((sum, group) => sum + group.rows.length, 0)
 
   return (
-    <section aria-labelledby={headingId} className="flex min-h-0 flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
+    <section aria-labelledby={headingId} data-lab-target="summarize.bay" className="flex min-h-0 flex-col gap-3">
+      <div data-lab-target="summarize.quarantine" className="flex items-center justify-between gap-4">
         <h2 id={headingId} className="text-sm leading-5 font-semibold">
           Quarantine bay
         </h2>

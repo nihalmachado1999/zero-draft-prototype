@@ -34,6 +34,8 @@ export const summarizeStore = {
   setQuarantine: (quarantine: boolean) => commit({ quarantine, mathId: quarantine ? state.mathId : null }),
   openRecord: (recordId: string) => commit({ recordId }),
   closeRecord: () => commit({ recordId: null }),
+  /** Puts back a state read earlier with get(): Lab Partner's Undo. */
+  restore: (snapshot: SummarizeState) => commit(snapshot),
   toggleMath: (testId: string) => commit({ mathId: state.mathId === testId ? null : testId }),
   openMath: (testId: string) => commit({ mathId: testId }),
   /**

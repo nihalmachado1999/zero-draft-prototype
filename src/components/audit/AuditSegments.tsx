@@ -45,7 +45,7 @@ export function AuditSegments({ segments, progress, onFollow }: AuditSegmentsPro
       ref={barRef}
       role="group"
       aria-label="One segment per test, colored by its most serious flag. Arrow keys step through the tests."
-      className="flex h-6 min-w-48 flex-1 items-stretch gap-px"
+      className="flex h-6 min-w-24 flex-1 items-stretch gap-px @max-[72rem]/audit:hidden"
       style={{ clipPath: introClip(progress.get()) }}
     >
       {segments.map((segment, index) => (

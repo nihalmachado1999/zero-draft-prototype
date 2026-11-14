@@ -61,10 +61,12 @@ export function TwinControls() {
   })
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
-      <div className="grid grid-cols-[1fr_1fr_minmax(15.5rem,0.9fr)] gap-6">
-        <div className="min-w-0">
-          <div className="flex items-baseline justify-between gap-2 text-sm leading-5 whitespace-nowrap">
+    // A size container: with the Lab Partner dock open the strip is narrower, so rod size takes a
+    // row of its own and the readouts may wrap under their labels.
+    <div className="@container/controls flex min-w-0 flex-1 flex-col justify-between gap-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3 @min-[38rem]/controls:grid-cols-[1fr_1fr_minmax(15.5rem,0.9fr)] @min-[38rem]/controls:gap-6">
+        <div data-lab-target="twin.o2" className="min-w-0">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2 text-sm leading-5 whitespace-nowrap">
             <label htmlFor={o2Id} className="text-muted">
               Oxygen
             </label>
@@ -84,8 +86,8 @@ export function TwinControls() {
           <SliderEnds from={`${O2_RANGE_PCT.min}%`} to={`${O2_RANGE_PCT.max}%`} />
         </div>
 
-        <div className="min-w-0">
-          <div className="flex items-baseline justify-between gap-2 text-sm leading-5 whitespace-nowrap">
+        <div data-lab-target="twin.flow" className="min-w-0">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2 text-sm leading-5 whitespace-nowrap">
             <label htmlFor={flowId} className="text-muted">
               Orbit airflow <i>U</i>
             </label>
@@ -109,7 +111,7 @@ export function TwinControls() {
           <SliderEnds from={FLOW_RANGE_CM_S.min} to={FLOW_RANGE_CM_S.max} note="log scale" />
         </div>
 
-        <fieldset className="min-w-0">
+        <fieldset data-lab-target="twin.rod" className="col-span-2 min-w-0 @min-[38rem]/controls:col-span-1">
           <legend className="text-sm leading-5 text-muted">Rod size</legend>
           <div className="mt-1 flex">
             {ROD_DIAMETERS_MM.map((rod) => (
@@ -135,6 +137,7 @@ export function TwinControls() {
       <div className="flex items-center gap-3">
         <button
           type="button"
+          data-lab-target="twin.ignite"
           onClick={() => burnStore.ignite()}
           className={`${BUTTON} border-line hover:border-muted`}
         >
@@ -143,6 +146,7 @@ export function TwinControls() {
         </button>
         <button
           type="button"
+          data-lab-target="twin.drain"
           disabled={draining}
           onClick={() => burnStore.drain(reducedMotion)}
           className={`${BUTTON} border-ink bg-ink font-medium text-graphite`}
@@ -152,6 +156,7 @@ export function TwinControls() {
         </button>
         <button
           type="button"
+          data-lab-target="twin.reset"
           onClick={() => burnStore.reset()}
           className={`${BUTTON} border-line hover:border-muted`}
         >

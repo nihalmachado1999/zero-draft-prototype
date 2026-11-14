@@ -28,6 +28,8 @@ export const burnStore = {
   setRod: (rodMm: RodMm) => commit(twin.setRod(state, rodMm)),
   ignite: () => commit(twin.ignite(state)),
   reset: () => commit(twin.reset()),
+  /** Puts back a state read earlier with get(): Lab Partner's Undo. */
+  restore: (snapshot: twin.TwinState) => commit(snapshot),
   /** Starts the 10 s drain, or jumps straight to its end under reduced motion. */
   drain: (instantly = false) =>
     commit(instantly ? twin.drainInstantly(state) : twin.startDrain(state)),

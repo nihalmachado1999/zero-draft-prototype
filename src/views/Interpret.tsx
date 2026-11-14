@@ -47,7 +47,7 @@ export function Interpret({ params }: ViewProps) {
           <aside aria-label="Readouts, alarm log and inputs" className="row-span-2 flex min-h-0 flex-col gap-5">
             <Readouts />
             <AlarmLog onShowSuppression={showSuppression} />
-            <div className="-mr-3 min-h-0 flex-1 overflow-y-auto border-t border-line pt-4 pr-3">
+            <div data-lab-target="interpret.inputs" className="-mr-3 min-h-0 flex-1 overflow-y-auto border-t border-line pt-4 pr-3">
               <h2 className="sr-only">Inputs</h2>
               <SimInputs />
             </div>

@@ -71,8 +71,10 @@ export function AuditBar() {
   }
 
   return (
-    <section aria-label="Data audit" className="flex h-10 shrink-0 items-center gap-6 px-6">
-      <p className="shrink-0 text-sm text-muted">{AUDIT_BAR_TITLE}</p>
+    // A size container: with the Lab Partner dock open on a narrow screen, the title gives way so
+    // the counters keep their room.
+    <section aria-label="Data audit" className="@container/audit flex h-10 min-w-0 shrink-0 items-center gap-6 px-6">
+      <p className="shrink-0 text-sm text-muted @max-[62rem]/audit:hidden">{AUDIT_BAR_TITLE}</p>
       {data.status === 'error' && (
         <p className="truncate text-sm text-red">Couldn’t load the audit data: {data.message}</p>
       )}

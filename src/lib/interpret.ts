@@ -16,7 +16,7 @@ import {
   type CabinState,
   type StepOptions,
 } from './cabin'
-import type { RodMm } from './physics'
+import { ROD_DIAMETERS_MM, type RodMm } from './physics'
 
 export const PRESET_IDS = ['m5', 'us-lab', 'small-cabin', 'n2', 'lunar'] as const
 export type PresetId = (typeof PRESET_IDS)[number]
@@ -131,6 +131,41 @@ export const PRESETS: Record<PresetId, Preset> = {
     },
     speed: 60,
   },
+}
+
+const NUMERIC_INPUTS = [
+  'volumeM3',
+  'pressureAtm',
+  'o2InitPct',
+  'co2InitPct',
+  'coInitPpm',
+  'powerW',
+  'flowCmS',
+  'n2FlowCcMin',
+  'n2StartMin',
+  'durationMin',
+] as const
+
+/**
+ * Applies a patch to the simulator's inputs, keeping only the fields a caller may set and only
+ * values the model can take. The view's controls and Lab Partner's set_cabin both use it.
+ */
+export function mergeInputs(inputs: CabinInputs, patch: Partial<CabinInputs>): CabinInputs {
+  const next: CabinInputs = { ...inputs }
+  for (const key of NUMERIC_INPUTS) {
+    const value = patch[key]
+    if (typeof value === 'number' && Number.isFinite(value)) next[key] = value
+  }
+  if (patch.geometry === 'opposed-slab' || patch.geometry === 'concurrent-rod') next.geometry = patch.geometry
+  if (patch.rodMm !== undefined && (ROD_DIAMETERS_MM as readonly number[]).includes(patch.rodMm)) {
+    next.rodMm = patch.rodMm
+  }
+  // A rod always needs a size and an airflow.
+  if (next.geometry === 'concurrent-rod') {
+    next.rodMm ??= ROD_DIAMETERS_MM[0]
+    next.flowCmS ??= 2
+  }
+  return next
 }
 
 /** The preset a test's record links to ("Replay this test"), if it has one. */

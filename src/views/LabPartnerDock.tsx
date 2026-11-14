@@ -1,5 +1,11 @@
 import { PanelRightClose, PanelRightOpen } from 'lucide-react'
-import { Note } from '../components/Note'
+import { useReducedMotion } from 'motion/react'
+import { useEffect, useRef, useState } from 'react'
+import { AskForm } from '../components/lab/AskForm'
+import { LabTurn } from '../components/lab/LabTurn'
+import { SuggestedQuestions } from '../components/lab/SuggestedQuestions'
+import { useCitation } from '../components/citationContext'
+import { labStore, useLab } from '../lib/labStore'
 
 type LabPartnerDockProps = {
   open: boolean
@@ -7,8 +13,9 @@ type LabPartnerDockProps = {
 }
 
 /**
- * F5 Lab Partner dock: full height on the right of every view. Collapsed to a 48px rail by
- * default, 384px when open. Text only, so no frame. The AI itself arrives in M6.
+ * F5 Lab Partner dock: full height on the right of every view, a 48px rail by default and 384px
+ * when open. A text section on the page background, so no frame. Questions go to
+ * /api/lab-partner; the tools it runs change the views behind it, each with an Undo.
  */
 export function LabPartnerDock({ open, onToggle }: LabPartnerDockProps) {
   return (
@@ -18,26 +25,7 @@ export function LabPartnerDock({ open, onToggle }: LabPartnerDockProps) {
       className={`flex shrink-0 flex-col border-l border-line ${open ? 'w-96' : 'w-12'}`}
     >
       {open ? (
-        <>
-          <div className="flex h-10 shrink-0 items-center justify-between px-6">
-            <h2 className="text-sm font-semibold">Lab Partner</h2>
-            <button
-              type="button"
-              onClick={onToggle}
-              aria-expanded={true}
-              aria-controls="lab-partner-dock"
-              className="flex items-center gap-2 text-sm text-muted hover:text-ink"
-            >
-              <PanelRightClose aria-hidden="true" className="size-4" />
-              Close
-            </button>
-          </div>
-          <div className="px-6 py-2">
-            <Note>
-              Lab Partner answers questions and drives the simulators. It arrives in M6.
-            </Note>
-          </div>
-        </>
+        <OpenDock onClose={onToggle} />
       ) : (
         <button
           type="button"
@@ -54,5 +42,80 @@ export function LabPartnerDock({ open, onToggle }: LabPartnerDockProps) {
         </button>
       )}
     </aside>
+  )
+}
+
+function OpenDock({ onClose }: { onClose: () => void }) {
+  const { openCitation } = useCitation()
+  const reduceMotion = useReducedMotion() ?? false
+  const turns = useLab((state) => state.turns)
+  const busy = useLab((state) => state.busy)
+  const [showSuggested, setShowSuggested] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Tools Lab Partner runs need the citation drawer and the motion setting from React.
+  useEffect(() => {
+    labStore.connect({ openCitation, reduceMotion })
+  }, [openCitation, reduceMotion])
+
+  // Keep the newest line in view as the answer arrives.
+  useEffect(() => {
+    const box = scrollRef.current
+    if (box) box.scrollTo({ top: box.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' })
+  }, [turns, reduceMotion])
+
+  const empty = turns.length === 0
+  return (
+    <>
+      <div className="flex h-10 shrink-0 items-center justify-between px-6">
+        <h2 className="text-sm font-semibold">Lab Partner</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-expanded={true}
+          aria-controls="lab-partner-dock"
+          className="flex items-center gap-2 text-sm text-muted hover:text-ink"
+        >
+          <PanelRightClose aria-hidden="true" className="size-4" />
+          Close
+        </button>
+      </div>
+
+      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pt-2 pb-6">
+        {empty && (
+          <p className="text-sm leading-6 text-muted">
+            Ask about the BASS-II fire tests. Lab Partner runs the app’s own models, changes the views to show you, and
+            cites NASA for every sentence. A script checks each quote and number before you see it.
+          </p>
+        )}
+        {empty && <SuggestedQuestions busy={busy} />}
+        {!empty && (
+          <ol aria-label="Transcript" aria-live="polite" className="flex flex-col gap-8">
+            {turns.map((turn) => (
+              <LabTurn key={turn.id} turn={turn} busy={busy} />
+            ))}
+          </ol>
+        )}
+      </div>
+
+      {!empty && (
+        <div className="shrink-0 border-t border-line px-6 py-2">
+          <button
+            type="button"
+            aria-expanded={showSuggested}
+            onClick={() => setShowSuggested((shown) => !shown)}
+            className="text-xs leading-5 text-muted hover:text-ink"
+          >
+            {showSuggested ? 'Hide suggested questions' : 'Suggested questions'}
+          </button>
+          {showSuggested && (
+            <div className="pt-2 pb-1">
+              <SuggestedQuestions busy={busy} onPick={() => setShowSuggested(false)} />
+            </div>
+          )}
+        </div>
+      )}
+      <AskForm busy={busy} />
+    </>
   )
 }

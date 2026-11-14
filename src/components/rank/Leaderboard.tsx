@@ -106,6 +106,7 @@ export function Leaderboard({ board, weights, notes, sliderNotes }: LeaderboardP
               return (
                 <motion.li
                   key={row.entity.id}
+                  data-lab-target={`rank.row.${row.entity.id}`}
                   layout="position"
                   transition={{ layout: move, opacity: fade }}
                   initial={{ opacity: 0 }}

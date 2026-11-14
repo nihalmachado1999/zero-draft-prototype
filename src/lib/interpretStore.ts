@@ -11,12 +11,12 @@ import {
   endSec,
   isPresetId,
   isSpeed,
+  mergeInputs,
   PRESETS,
   stepOptions,
   type PresetId,
   type Speed,
 } from './interpret'
-import { ROD_DIAMETERS_MM } from './physics'
 
 export interface SimState {
   presetId: PresetId
@@ -36,19 +36,6 @@ export interface SimState {
   cause: 'play' | 'jump'
 }
 
-const NUMERIC_INPUTS = [
-  'volumeM3',
-  'pressureAtm',
-  'o2InitPct',
-  'co2InitPct',
-  'coInitPpm',
-  'powerW',
-  'flowCmS',
-  'n2FlowCcMin',
-  'n2StartMin',
-  'durationMin',
-] as const
-
 function runFor(inputs: CabinInputs): readonly CabinState[] {
   return simulateCabin(inputs, stepOptions(inputs))
 }
@@ -65,25 +52,6 @@ function fromPreset(id: PresetId): SimState {
     tSec: 0,
     cause: 'jump',
   }
-}
-
-/** Keeps only the fields a caller may set, and only values the model can take. */
-function merge(inputs: CabinInputs, patch: Partial<CabinInputs>): CabinInputs {
-  const next: CabinInputs = { ...inputs }
-  for (const key of NUMERIC_INPUTS) {
-    const value = patch[key]
-    if (typeof value === 'number' && Number.isFinite(value)) next[key] = value
-  }
-  if (patch.geometry === 'opposed-slab' || patch.geometry === 'concurrent-rod') next.geometry = patch.geometry
-  if (patch.rodMm !== undefined && (ROD_DIAMETERS_MM as readonly number[]).includes(patch.rodMm)) {
-    next.rodMm = patch.rodMm
-  }
-  // A rod always needs a size and an airflow.
-  if (next.geometry === 'concurrent-rod') {
-    next.rodMm ??= ROD_DIAMETERS_MM[0]
-    next.flowCmS ??= 2
-  }
-  return next
 }
 
 let state: SimState = fromPreset('m5')
@@ -115,7 +83,7 @@ export const interpretStore = {
 
   /** Changes inputs and reruns the model. The clock stays where it was (or at the new end). */
   setInput(patch: Partial<CabinInputs>) {
-    const inputs = merge(state.inputs, patch)
+    const inputs = mergeInputs(state.inputs, patch)
     const run = runFor(inputs)
     const end = endSec(run)
     const tSec = Math.min(state.tSec, end)
@@ -142,6 +110,11 @@ export const interpretStore = {
   seek(tSec: number) {
     if (!Number.isFinite(tSec)) return
     commit({ tSec: Math.min(Math.max(tSec, 0), endSec(state.run)), cause: 'jump' })
+  },
+
+  /** Puts back a state read earlier with get(), paused: Lab Partner's Undo. */
+  restore(snapshot: SimState) {
+    commit({ ...snapshot, playing: false, cause: 'jump' })
   },
 
   /** Back to the current preset's own inputs, at its start, paused. */

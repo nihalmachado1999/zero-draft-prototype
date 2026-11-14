@@ -75,6 +75,7 @@ export function PresetRow() {
           {PRESET_IDS.map((id, index) => (
             <button
               key={id}
+              data-lab-target={`interpret.preset.${id}`}
               ref={(button) => void (buttons.current[index] = button)}
               type="button"
               aria-pressed={id === presetId}
