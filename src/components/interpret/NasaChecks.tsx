@@ -31,6 +31,9 @@ export function NasaChecks() {
   }, [])
 
   const measuredRise = m5Row?.dCo2Pct ?? null
+  // The replay starts from what the MSG held before M5, so the fire's own CO is the end minus that.
+  const m5Start = PRESETS.m5.inputs
+  const ppm = (value: number) => n(Math.round(value).toLocaleString('en-US'))
   const rows: { check: ReactNode; model: ReactNode; nasa: ReactNode }[] = [
     {
       check: (
@@ -76,12 +79,14 @@ export function NasaChecks() {
       model: (
         <span className="flex flex-col gap-1">
           <span>
-            {n(Math.round(model.m5.coPpm).toLocaleString('en-US'))} ppm from the stoichiometric CO2 rise ({n(model.m5.co2Pct.toFixed(2))}%)
+            {ppm(model.m5.coPpm)} ppm: the {n(m5Start.coInitPpm)} ppm already in the MSG
+            <Cite id="bass2.table.a4-m5" />, plus {ppm(model.m5.coPpm - m5Start.coInitPpm)} from the stoichiometric CO2 rise (
+            {n((model.m5.co2Pct - m5Start.co2InitPct).toFixed(2))}%)
             <Cite id="cabin.model" />
           </span>
           {measuredRise !== null && m5Row && (
             <span>
-              or {n(Math.round(coFromCo2RisePpm(measuredRise, 'opposed-slab')).toLocaleString('en-US'))} ppm from the measured rise (
+              or {ppm(m5Start.coInitPpm + coFromCo2RisePpm(measuredRise, 'opposed-slab'))} ppm with the measured rise (
               {n(measuredRise.toFixed(2))}%, CSV {n(m5Row.co2InitPct)} to {n(m5Row.co2FinalPct)})
             </span>
           )}

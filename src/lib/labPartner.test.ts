@@ -125,7 +125,7 @@ describe('answerQuestion with a mocked LLM', () => {
     expect(requests[0].system).toContain('# The screen now')
     expect(requests[1]).toMatchObject({ json: true, maxOutputTokens: ANSWER_MAX_TOKENS })
     expect(requests[1].tools).toBeUndefined()
-    expect(requests[1].user).toContain('tool#1.coPeakPpm = 986.7')
+    expect(requests[1].user).toContain('tool#1.coPeakPpm = 995.7')
     expect(requests[1].user).toMatch(/\[c\d{4}\] BASS-II report, p\. \d+/)
     // The tool step sees the question, not the excerpts: they only matter for the answer.
     expect(requests[0].user).toBe('Question: What happened in Test M5?')

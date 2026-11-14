@@ -39,6 +39,13 @@ export function isSpeed(value: unknown): value is Speed {
  */
 export const M5_TEST = { flowCmS: 10, minutes: 27.2, o2InitPct: 22.2, o2FinalPct: 19 } as const
 
+/**
+ * What the MSG held when Test M5 was lit, from its row in Table A.4 (and its CSV cells): 0.44 %
+ * CO2 and 9 ppm CO left from earlier tests. The replay starts from them, so its end can be read
+ * against the test's own final cells. Quoted: bass2.table.a4-m5 (p. 109).
+ */
+export const M5_START = { co2InitPct: 0.44, coInitPpm: 9 } as const
+
 /** M5's average heat release rate, 83.48 W: its O2 drop in the MSG through Huggett (cabin.m5-power). */
 export const M5_POWER_W = averagePowerW(
   heatFromO2Drop(MSG_VOLUME_M3, M5_TEST.o2InitPct - M5_TEST.o2FinalPct).kJ,
@@ -75,7 +82,10 @@ export interface Preset {
   speed: Speed
 }
 
-/** Test M5's fire in the MSG: constant power, no N2. Every other fire preset starts from it. */
+/**
+ * Test M5's fire in the MSG, in clean air: constant power, no N2. The other fire presets start
+ * from it; only the replay adds what the MSG held before M5 (M5_START).
+ */
 const M5_FIRE: CabinInputs = {
   volumeM3: MSG_VOLUME_M3,
   pressureAtm: 1,
@@ -93,7 +103,7 @@ const M5_FIRE: CabinInputs = {
 }
 
 export const PRESETS: Record<PresetId, Preset> = {
-  m5: { id: 'm5', label: 'Replay Test M5', inputs: M5_FIRE, speed: 60 },
+  m5: { id: 'm5', label: 'Replay Test M5', inputs: { ...M5_FIRE, ...M5_START }, speed: 60 },
   'us-lab': {
     id: 'us-lab',
     label: 'Move it into the US Lab',

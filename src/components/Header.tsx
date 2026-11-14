@@ -20,7 +20,7 @@ export function Header({ active }: HeaderProps) {
           ZERO-DRAFT
         </a>
         <p className="hidden text-sm lg:block">
-          Earth fire tests miss how materials burn in orbit.
+          NASA screens spacecraft materials with a 1g test that ignores low gravity.
           <Cite id="psi26.impacts" />
         </p>
       </div>

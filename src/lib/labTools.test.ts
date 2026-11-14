@@ -103,12 +103,16 @@ describe('set_burn_twin', () => {
 })
 
 describe('the cabin presets (SPEC §8.2)', () => {
-  it('replays Test M5: O2 to 19.0, CO 986.7 ppm, past both SMACs, under the sensor ceiling', () => {
+  it('replays Test M5 from its own start: O2 to 19.0, CO 995.7 ppm, past both SMACs, under the sensor ceiling', () => {
     const result = one('run_cabin_preset', { preset: 'm5' })
     expect(result).toMatchObject({ view: 'interpret', opensView: true, summary: 'ran Replay Test M5' })
+    expect(value(result, 'co2StartPct')).toBe(0.44)
+    expect(value(result, 'coStartPpm')).toBe(9)
+    expect(result.fields.find((f) => f.key === 'coStartPpm')?.claimId).toBe('bass2.table.a4-m5')
     expect(value(result, 'o2EndPct')).toBe(19)
-    expect(value(result, 'co2EndPct')).toBe(2.67)
-    expect(value(result, 'coPeakPpm')).toBe(986.7)
+    // 0.44 % + the fire's 2.667 %, and 9 ppm + the fire's 986.7 ppm (SPEC §8.2).
+    expect(value(result, 'co2EndPct')).toBe(3.11)
+    expect(value(result, 'coPeakPpm')).toBe(995.7)
     expect(value(result, 'powerW')).toBe(83.48)
     expect(String(value(result, 'smac55'))).toMatch(/^CO passes the 1-hour SMAC \(55 ppm\) at T\+/)
     expect(String(value(result, 'sensorCeiling'))).toContain('stays under')
@@ -118,6 +122,8 @@ describe('the cabin presets (SPEC §8.2)', () => {
   it('moves it into the US Lab: about 2.3 ppm, below both limits', () => {
     const result = one('run_cabin_preset', { preset: 'us-lab' })
     expect(value(result, 'coPeakPpm')).toBe(2.3)
+    // A clean cabin: no starting CO2 or CO, so no fields for them.
+    expect(result.fields.some((f) => f.key === 'coStartPpm')).toBe(false)
     expect(String(value(result, 'smac10'))).toContain('stays below')
     expect(String(value(result, 'reportUsLab'))).toContain('1.5 ppm')
   })

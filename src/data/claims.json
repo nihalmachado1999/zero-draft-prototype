@@ -711,7 +711,7 @@
     "text": "In the one outlier test the CO sensor was over-ranged (>1,000 ppm)",
     "kind": "quoted",
     "sourceId": "nasa-tm-20210011385",
-    "quote": "the CO sensor was over-ranged for this test (>1,000 ppm full scale), so we have no quantitative value for CO for",
+    "quote": "the CO sensor was over-ranged for this test (>1,000 ppm full scale), so we have no quantitative value for CO for this test",
     "locator": {
       "pdfPage": 15,
       "reportPage": 7,

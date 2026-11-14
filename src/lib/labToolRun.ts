@@ -16,6 +16,7 @@ import {
   firstTime,
   logEntries,
   M5_POWER_W,
+  M5_START,
   mergeInputs,
   PRESETS,
   psia,
@@ -246,6 +247,10 @@ const PRESET_QUOTES: Partial<Record<PresetId, [string, string][]>> = {
   ],
 }
 
+/** The claim behind a run's starting CO2 and CO: Test M5's Table A.4 row, when they are its cells. */
+const startClaim = (inputs: CabinInputs) =>
+  inputs.co2InitPct === M5_START.co2InitPct && inputs.coInitPpm === M5_START.coInitPpm ? 'bass2.table.a4-m5' : undefined
+
 const ALARM_WORDS: [LogKind, string, string][] = [
   ['smac-10', 'long-term SMAC', `${SMAC_LONG_TERM_PPM} ppm`],
   ['smac-55', '1-hour SMAC', `${SMAC_1_HOUR_PPM} ppm`],
@@ -310,6 +315,13 @@ function cabin(inputs: CabinInputs, preset: PresetId | null): Omit<Outcome, 'sum
       rod ? 'bass2.co.550' : 'bass2.co.370',
     ),
     field('o2StartPct', 'Oxygen at the start, %', round(first.o2Pct, 2)),
+    // The replay starts from what the MSG held before Test M5; a clean cabin starts from zero.
+    ...(inputs.co2InitPct > 0 || inputs.coInitPpm > 0
+      ? [
+          field('co2StartPct', 'CO2 at the start, %', round(inputs.co2InitPct, 2), startClaim(inputs)),
+          field('coStartPpm', 'CO at the start, ppm', round(inputs.coInitPpm, 1), startClaim(inputs)),
+        ]
+      : []),
     field('o2EndPct', 'Oxygen at the end, % (model)', round(last.o2Pct, 2), 'cabin.model'),
     field('co2EndPct', 'CO2 at the end, % (model)', round(last.co2Pct, 2), 'cabin.model'),
     field('coPeakPpm', 'Highest CO, ppm (model)', round(peak, 1), 'cabin.model'),

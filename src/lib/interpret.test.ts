@@ -59,6 +59,9 @@ describe('Replay Test M5 (SPEC F4)', () => {
     const { inputs, playing, tSec } = interpretStore.get()
     expect(inputs.volumeM3).toBe(MSG_VOLUME_M3)
     expect(inputs.o2InitPct).toBe(22.2)
+    // What the MSG held before M5, from its Table A.4 row: 0.44 % CO2 and 9 ppm CO.
+    expect(inputs.co2InitPct).toBe(0.44)
+    expect(inputs.coInitPpm).toBe(9)
     expect(inputs.geometry).toBe('opposed-slab')
     expect(inputs.n2FlowCcMin).toBe(0)
     expect(inputs.durationMin).toBe(27.2)
@@ -68,17 +71,20 @@ describe('Replay Test M5 (SPEC F4)', () => {
     expect(tSec).toBe(0)
   })
 
-  it('replays O2 22.2 % → 19.0 %, CO2 2.667 % and CO 986.7 ppm, then the burn ends', () => {
+  it('replays O2 22.2 % → 19.0 %; the fire adds CO2 2.667 % and CO 986.7 ppm to M5’s start, then the burn ends', () => {
     const end = playToEnd()
     within(end.o2Pct, 19.0)
-    within(end.co2Pct, 2.667)
-    within(end.coPpm, 986.7)
+    // SPEC §8.2's values are what the fire makes; the replay adds them to 0.44 % and 9 ppm.
+    within(end.co2Pct - 0.44, 2.667)
+    within(end.coPpm - 9, 986.7)
+    within(end.co2Pct, 3.107)
+    within(end.coPpm, 995.7)
     expect(end.flame).toBe('out-duration')
     expect(interpretStore.get().tSec).toBe(27.2 * 60)
     expect(interpretStore.get().playing).toBe(false)
   })
 
-  it('logs both SMACs and the end of the burn, but not the 1,000 ppm sensor ceiling: CO stops at 987', () => {
+  it('logs both SMACs and the end of the burn, but not the 1,000 ppm sensor ceiling: CO stops at 996', () => {
     playToEnd()
     expect(loggedKinds()).toEqual(['smac-10', 'smac-55', 'burn-ended'])
   })
@@ -279,7 +285,7 @@ describe('the store’s plain actions', () => {
     interpretStore.setInput({ volumeM3: 1 })
     expect(interpretStore.get().edited).toBe(true)
     expect(interpretStore.get().tSec).toBe(600)
-    within(stateAt(interpretStore.get().run, 600).coPpm, 986.7 * 0.25 * (600 / 1632))
+    within(stateAt(interpretStore.get().run, 600).coPpm, 9 + 986.7 * 0.25 * (600 / 1632))
     interpretStore.setInput({ durationMin: 5 })
     expect(interpretStore.get().tSec).toBe(300)
     interpretStore.reset()

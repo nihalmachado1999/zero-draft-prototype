@@ -95,7 +95,7 @@ Rewritten on 14 Nov. Screen recording at 1440×900, captions burned in, no voice
 | Time | Screen | Action | Caption |
 |---|---|---|---|
 | 0–8 s | Overview (Burn Twin), dock closed | Press "Drain oxygen". The Earth flame goes out at 15.4%; the orbit flame turns blue, pulses, and goes out at 13.61%. "Kept burning 1.79 points of oxygen longer" appears. | "A PMMA rod in 1g goes out at 15.4% oxygen. In a gentle orbit airflow, NASA's model keeps it burning to 13.61%." |
-| 8–13 s | Same, the header | Click footnote ¹ on the thesis line, "Earth fire tests miss how materials burn in orbit." The drawer slides in; the underline draws under "based on 1-g behavior without consideration of low gravity effects"; "Quote checked" in green. | "Every claim opens NASA's own words, checked by script against the source." |
+| 8–13 s | Same, the header | Click footnote ¹ on the thesis line, "NASA screens spacecraft materials with a 1g test that ignores low gravity." The drawer slides in; the underline draws under "based on 1-g behavior without consideration of low gravity effects"; "Quote checked" in green. | "Every claim opens NASA's own words, checked by script against the source." |
 | 13–19 s | Audit bar to Summarize | Close the drawer (Esc). Click "Quarantined 7" in the audit bar. The tiles fly into the quarantine bay; P22b's math opens: 19.1 + 20.0 = 39.1. | "We audited all 129 ISS tests in NASA's raw data. 7 readings are impossible or missing, and we show why." |
 | 19–26 s | Lab Partner and Interpret | The dock is already open, with "Would a Test M5 fire be dangerous in a small cabin?" typed in. Press Enter: Interpret opens, the simulator runs at 600×, CO crosses 10 and then 55 ppm, and the answer arrives with its citation chips. | "Lab Partner runs the app's models and cites every sentence. A script checks each quote and number first." |
 | 26–30 s | Close card | none | "ZERO-DRAFT. Every number traced to NASA data." Then the URL. |
@@ -121,7 +121,7 @@ Rewritten on 14 Nov. Screen recording at 1440×900, captions burned in, no voice
 The app is four full-screen views, one at a time, chosen by the URL hash. The header, the audit strip, the Lab Partner dock and the citation drawer stay mounted on every view; only the main area changes.
 
 ```
-+-- Zero-draft   Earth fire tests miss how materials burn in orbit.   Overview  Summarize  Rank  Interpret --+
++-- Zero-draft   NASA screens spacecraft materials with a 1g test that ignores low gravity.   Overview  Summarize  Rank  Interpret --+
 | F0 audit strip, 40px: counts from the CSV, clickable, segment bar              |                           |
 +--------------------------------------------------------------------------------+ F5 Lab Partner dock,      |
 |                                                                                | full height. A 48px rail  |
@@ -524,7 +524,7 @@ Relevance of each indexed investigation to the ISS and lunar atmospheres, from F
 
 | Preset | Setup | What it shows |
 |---|---|---|
-| **Replay Test M5** | V 0.25 m³, O2 22.2%, P 83.48 W (derived from Table 5.1: 3.2 points of O2 in 27.2 min), opposed slab, 27.2 min, no N2 | O2 22.2 to 19.0 (a replay: by construction). CO2 2.67% from stoichiometry vs 2.78% measured (CSV: 0.44 to 3.22). CO is 987 ppm from the stoichiometric CO2, or 1,029 ppm from the measured CO2. The sensor read ">500" in the CSV and Table A.4; the report text says it over-ranged at ">1,000 ppm full scale" (`bass2.co.over-range`). Both fit about 1,000 ppm. Then the incident card: Rick ignited it during loss of signal with the ground (`bass2.note.m5-los`), the window damage, the leak repaired, and Mastracchio's door repair (`bass2.m5.window`, `bass2.m5.leak-repaired`, `bass2.m5.door-repair`). Caption: "A consistency check, not proof: the 370 ppm average has large scatter" (`bass2.co.scatter`). |
+| **Replay Test M5** | V 0.25 m³, O2 22.2%, CO2 0.44% and CO 9 ppm (what the MSG held before M5: its Table A.4 row, `bass2.table.a4-m5`, and its CSV cells), P 83.48 W (derived from Table 5.1: 3.2 points of O2 in 27.2 min), opposed slab, 27.2 min, no N2. The other fire presets start from clean air. | O2 22.2 to 19.0 (a replay: by construction). The fire adds 2.67% CO2 from stoichiometry vs 2.78% measured (CSV: 0.44 to 3.22), so the replay ends at 3.11% against the CSV's 3.22%. CO ends at 996 ppm: the 9 ppm it started with plus 987 ppm from the stoichiometric CO2, or 1,038 ppm with the measured CO2 (9 + 1,029). The sensor read ">500" in the CSV and Table A.4; the report text says it over-ranged at ">1,000 ppm full scale" (`bass2.co.over-range`). Both fit about 1,000 ppm. Then the incident card: Rick ignited it during loss of signal with the ground (`bass2.note.m5-los`), the window damage, the leak repaired, and Mastracchio's door repair (`bass2.m5.window`, `bass2.m5.leak-repaired`, `bass2.m5.door-repair`). Caption: "A consistency check, not proof: the 370 ppm average has large scatter" (`bass2.co.scatter`). |
 | **Move that fire into the US Lab** | Same fire, V 106 m³ (`bass2.us-lab-volume`) | CO about 2.3 ppm, below both limits. The report says about 1.5 ppm for a BASS-II-scale fire (`bass2.co.smac`, `bass2.cabin-dilution`). |
 | **Same fire, small sealed cabin** | Same fire; a volume slider from 1 to 40 m³ | The 1-hour limit (55 ppm) is crossed below about 4.5 m³ for opposed slabs and 6.7 m³ for concurrent rods. The long-term limit (10 ppm) below about 24.7 and 36.7 m³. Assumptions shown: sealed, well mixed, no scrubbing, 1 atm, same fire. |
 | **Nitrogen dilution in the glovebox** | V 0.25 m³, 6.35 mm rod, U 2 cm/s, O2 20.9%, small fire (5 W), r 493 cm³/min (`bass2.cstr.n2-flow`) | The flame goes out when O2 falls below 13.61%. N2 alone would take about 3.6 h; the fire's own O2 use shortens that, and the simulator shows the real time. With N2 alone at U = 20 cm/s: about 2.8 h. The report says dilution "typically took 1 to 3 h" (`bass2.cstr.hours`). Caption: "BASS-II used N2 dilution to set test oxygen levels, not to fight fires." When the flame goes out, a card: "Keep suppressing until it cools" (`bass2.vapor-jet`, `bass2.suppress-until-cool`). |
@@ -544,7 +544,7 @@ Relevance of each indexed investigation to the ISS and lunar atmospheres, from F
 |---|---|---|---|
 | Dilution time with N2 only (no fire), 20.9% to the blowoff limit at 20 cm/s | 169 min (2.8 h) | "typically took 1 to 3 h" | `bass2.cstr.hours` |
 | M5 O2, 22.2% to 19.0% | 19.0% | Table 5.1 row M5 | `bass2.m5.row` (labeled "replay, by construction") |
-| M5 CO | 987 ppm (stoichiometric CO2) or 1,029 ppm (measured CO2) | ">500" in the CSV and Table A.4; ">1,000 ppm full scale" in the report text | `bass2.co.over-range` |
+| M5 CO | 996 ppm: 9 at the start plus 987 from the stoichiometric CO2, or 1,038 ppm with the measured CO2 (9 + 1,029) | ">500" in the CSV and Table A.4; ">1,000 ppm full scale" in the report text | `bass2.co.over-range` |
 | Biggest test diluted into the US Lab | ≈ 2.3 ppm | "~1.5 ppm" for a BASS-II-scale fire | `bass2.co.smac` |
 
 **Acceptance:**
@@ -813,7 +813,7 @@ Pressure is stored in atm in the cabin model. The UI shows psia with kPa in brac
 
 1. **Retrieve:** MiniSearch over `api/_data/chunks.json`. Chunks are about 800 characters, overlap 150, and each records its sourceId and page. Take the top 6.
 2. **First LLM call:** the system prompt holds the rules from F5 plus the tool definitions. The user message holds the question and the chunks.
-3. **Run tools on the server** by importing the pure functions from `src/lib/`. Return results with ids (e.g. `tool#1.coPeakPpm = 986.7`).
+3. **Run tools on the server** by importing the pure functions from `src/lib/`. Return results with ids (e.g. `tool#1.coPeakPpm = 995.7`).
 4. **Second LLM call:** write the answer. Output JSON: `{ sentences: [{ text, support: [{ chunkId, quote } | { toolResultId }] }], uiActions: [...] }`.
 5. **Verify:**
    - each quote is a substring of its chunk after `normalize()`

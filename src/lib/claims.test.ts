@@ -13,7 +13,7 @@ import {
   US_LAB_VOLUME_M3,
 } from './cabin'
 import { CLAIMS, citePreview, getClaim, SOURCES, sourceLink, splitEmphasis } from './claims'
-import { LUNAR_ATMOSPHERE, M5_TEST, N2_PRESET } from './interpret'
+import { LUNAR_ATMOSPHERE, M5_START, M5_TEST, N2_PRESET } from './interpret'
 import { normalize } from './normalize'
 import { ALPHA_PMMA_CM2_S, EARTH_LIMIT_O2_PCT, R0_CM } from './physics'
 import { TEST1_IGNITION_S } from './risk'
@@ -175,6 +175,10 @@ describe('model constants match their quotes', () => {
     // Table 5.1's M5 row: "M5 3 2.2 2 10 0.071 27.2 22.2 19" (flow, minutes, initial and final O2).
     expect(quoteOf('bass2.m5.row')).toContain(
       ` ${M5_TEST.flowCmS} 0.071 ${M5_TEST.minutes} ${M5_TEST.o2InitPct} ${M5_TEST.o2FinalPct}`,
+    )
+    // M5's row in Table A.4: calibrated O2, uncalibrated O2, then initial and final CO2 and CO.
+    expect(quoteOf('bass2.table.a4-m5')).toContain(
+      `${M5_TEST.o2InitPct} ${M5_TEST.o2FinalPct.toFixed(1)} 20.6 17.4 ${M5_START.co2InitPct} 3.22 ${M5_START.coInitPpm} >500`,
     )
     expect(quoteOf('zayac.atmospheres')).toContain(
       `${LUNAR_ATMOSPHERE.o2Pct}% oxygen at ${LUNAR_ATMOSPHERE.psia} psia`,

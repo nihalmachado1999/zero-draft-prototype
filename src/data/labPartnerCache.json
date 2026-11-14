@@ -1,6 +1,6 @@
 {
  "generatedBy": "pipeline/scripts/lab-cache.ts",
- "generatedAt": "2026-11-14T12:31:24.267Z",
+ "generatedAt": "2026-11-14T13:05:09.635Z",
  "model": "openai/gpt-oss-120b",
  "promptVersion": "lab-partner-tools@1+lab-partner-answer@4",
  "answers": [
@@ -228,6 +228,18 @@
         "value": 22.2
        },
        {
+        "key": "co2StartPct",
+        "label": "CO2 at the start, %",
+        "value": 0.44,
+        "claimId": "bass2.table.a4-m5"
+       },
+       {
+        "key": "coStartPpm",
+        "label": "CO at the start, ppm",
+        "value": 9,
+        "claimId": "bass2.table.a4-m5"
+       },
+       {
         "key": "o2EndPct",
         "label": "Oxygen at the end, % (model)",
         "value": 19,
@@ -236,25 +248,25 @@
        {
         "key": "co2EndPct",
         "label": "CO2 at the end, % (model)",
-        "value": 2.67,
+        "value": 3.11,
         "claimId": "cabin.model"
        },
        {
         "key": "coPeakPpm",
         "label": "Highest CO, ppm (model)",
-        "value": 986.7,
+        "value": 995.7,
         "claimId": "cabin.model"
        },
        {
         "key": "smac10",
         "label": "The long-term SMAC (10 ppm), model",
-        "value": "CO passes the long-term SMAC (10 ppm) at T+00:17",
+        "value": "CO passes the long-term SMAC (10 ppm) at T+00:02",
         "claimId": "bass2.co.smac"
        },
        {
         "key": "smac55",
         "label": "The 1-hour SMAC (55 ppm), model",
-        "value": "CO passes the 1-hour SMAC (55 ppm) at T+01:31",
+        "value": "CO passes the 1-hour SMAC (55 ppm) at T+01:17",
         "claimId": "bass2.co.smac"
        },
        {
@@ -268,18 +280,6 @@
         "label": "What the flame does (model)",
         "value": "burns for the 27.2 min set: there is no extinction model for slabs",
         "claimId": "cabin.model"
-       },
-       {
-        "key": "volumeFor55M3",
-        "label": "Below this volume, this fire passes 55 ppm (model), m³",
-        "value": 4.5,
-        "claimId": "cabin.volume-limit"
-       },
-       {
-        "key": "volumeFor10M3",
-        "label": "Below this volume, this fire passes 10 ppm (model), m³",
-        "value": 24.7,
-        "claimId": "cabin.volume-limit"
        },
        {
         "key": "assumptions",
@@ -302,7 +302,7 @@
        {
         "key": "coOverRange",
         "label": "NASA’s words, BASS-II report, p. 7",
-        "value": "the CO sensor was over-ranged for this test (>1,000 ppm full scale), so we have no quantitative value for CO for",
+        "value": "the CO sensor was over-ranged for this test (>1,000 ppm full scale), so we have no quantitative value for CO for this test",
         "claimId": "bass2.co.over-range"
        },
        {
@@ -345,8 +345,14 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "In Test M5 a 3-mm-thick, two-sided PMMA slab burned for the 27.2 min set, with oxygen dropping from 22.2 % to 19 % (model).",
+      "text": "Test M5 burned a 3-mm-thick PMMA slab, two-sided, in opposed geometry for 27.2 min.",
       "supports": [
+       {
+        "kind": "tool",
+        "ref": "tool#1.tableRow",
+        "label": "NASA’s words, BASS-II report, p. 57",
+        "claimId": "bass2.m5.row"
+       },
        {
         "kind": "quote",
         "chunkId": "c0235",
@@ -355,13 +361,15 @@
         "place": "BASS-II report, p. 57",
         "pdfPage": 65,
         "reportPage": 57
-       },
-       {
-        "kind": "tool",
-        "ref": "tool#1.durationMin",
-        "label": "Burn length set, min",
-        "claimId": "cabin.model"
-       },
+       }
+      ]
+     }
+    },
+    {
+     "type": "sentence",
+     "sentence": {
+      "text": "In the model the oxygen dropped from 22.2 % to 19 % and CO peaked at about 996 ppm, passing the 1-hour SMAC at T+01:17.",
+      "supports": [
        {
         "kind": "tool",
         "ref": "tool#1.o2StartPct",
@@ -373,26 +381,12 @@
         "ref": "tool#1.o2EndPct",
         "label": "Oxygen at the end, % (model)",
         "claimId": "cabin.model"
-       }
-      ]
-     }
-    },
-    {
-     "type": "sentence",
-     "sentence": {
-      "text": "The model predicts the peak carbon monoxide reached about 987 ppm, exceeding the long-term SMAC (10 ppm) at T+00:17 and the 1-hour SMAC (55 ppm) at T+01:31.",
-      "supports": [
+       },
        {
         "kind": "tool",
         "ref": "tool#1.coPeakPpm",
         "label": "Highest CO, ppm (model)",
         "claimId": "cabin.model"
-       },
-       {
-        "kind": "tool",
-        "ref": "tool#1.smac10",
-        "label": "The long-term SMAC (10 ppm), model",
-        "claimId": "bass2.co.smac"
        },
        {
         "kind": "tool",
@@ -406,7 +400,7 @@
     {
      "type": "sentence",
      "sentence": {
-      "text": "The CO sensor was over-ranged (>1,000 ppm) and the long burn caused damage to the downstream lower corner of the front window where a flow-duct leak existed.",
+      "text": "The CO sensor was over-ranged (>1,000 ppm) and the long burn caused overheat damage to the downstream lower corner of the front window where a flow-duct leak was occurring.",
       "supports": [
        {
         "kind": "tool",
