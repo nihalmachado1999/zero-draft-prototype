@@ -8,7 +8,8 @@ import { CHART_HZ, EASE_OUT, useSimFrame } from './simFrame'
 
 const PLOT_LEFT = 52
 const PLOT_RIGHT_PAD = 12
-const TITLE_H = 22
+// Room for the title plus half a tick label: a tick at the top of the domain is centred on the plot's top edge.
+const TITLE_H = 30
 const GAP = 14
 const AXIS_H = 40
 /** The band wipe: the signature motion may run longer than an interaction (CLAUDE.md). */

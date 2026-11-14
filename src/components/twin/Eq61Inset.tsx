@@ -130,13 +130,13 @@ function LineLabels({
           <Cite id="twin.orbit-limit" />
         </p>
         <p className="absolute right-12" style={{ bottom: fromBottom(earthY) + 2 }}>
-          Earth limit <span className="num">{EARTH_LIMIT_O2_PCT.toFixed(1)}%</span>{' '}
+          Earth limit <span className="tabular-nums">{EARTH_LIMIT_O2_PCT.toFixed(1)}%</span>{' '}
           <Cite id="bass2.flam.vs-1g" />
         </p>
         {/* Under its line at the right, where the curve is well above it and clear of the dot at the
             drain's end (13% at 2 cm/s), the demo's last frame. */}
         <p ref={blowoffLabel} className="absolute right-1.5" style={{ top: blowoffY - plot.y + 1 }}>
-          <span className="num">{BLOWOFF_AT_ZERO_PCT.toFixed(1)}%</span>, zero-stretch limit, model
+          <span className="tabular-nums">{BLOWOFF_AT_ZERO_PCT.toFixed(1)}%</span>, zero-stretch limit, model
           <Cite id="bass2.flam.derate" />
         </p>
       </div>

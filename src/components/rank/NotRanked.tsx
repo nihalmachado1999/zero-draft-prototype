@@ -79,10 +79,11 @@ function Finding({ claimId }: { claimId: string }) {
 /** Why a finding card's sample type isn't on the leaderboard, from the data. */
 function findingNote(group: UnrankedGroup): ReactNode {
   if (group.family === 'nomex') {
-    // NASA's Appendix A note on F3: "Brief ignition flash, no sustained flame".
+    // Each clause has its own source: NASA's summary of all three, then its Appendix A note on F3.
     return (
       <>
-        Not ranked: no sustained flame in any of the {countWord(group.tests)}
+        Not ranked: none of the {countWord(group.tests)} sustained a flame
+        <Cite id="bass2.nomex" />; <span className="test-id">F3</span> had only a brief ignition flash
         <Cite id="bass2.note.f3" />.
       </>
     )

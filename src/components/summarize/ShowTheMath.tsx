@@ -65,7 +65,8 @@ export function ShowTheMath({ forensic, id }: ShowTheMathProps) {
         <figure className="flex flex-col gap-2">
           <dl className="grid w-fit grid-cols-[repeat(4,auto)] gap-x-5 gap-y-1">
             {CELL_LABELS.map((label, index) => (
-              <div key={label} className="flex flex-col gap-1">
+              // Values sit on one line, under labels of one or two lines.
+              <div key={label} className="flex flex-col justify-end gap-1">
                 <dt className="max-w-20 text-xs leading-4 text-muted">
                   {label}
                   {index === blankCell && ', blank'}

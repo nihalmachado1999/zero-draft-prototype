@@ -127,7 +127,7 @@ export function TwinControls() {
                   onChange={() => burnStore.setRod(rod)}
                   className="sr-only"
                 />
-                <span className="num">{rod}</span> mm
+                <span className="tabular-nums">{rod}</span> mm
               </label>
             ))}
           </div>

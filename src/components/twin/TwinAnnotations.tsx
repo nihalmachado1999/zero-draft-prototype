@@ -49,7 +49,7 @@ export function TwinAnnotations({ layout }: { layout: StageLayout }) {
         className="absolute text-right text-xs leading-4 whitespace-nowrap text-ink/70"
         style={{ right: layout.width - earthTip.x + rodRadius + 16, top: earthTip.y + 20 }}
       >
-        <span ref={earthMarginRef} className="num" /> points <span ref={earthSideRef} /> its limit
+        <span ref={earthMarginRef} className="tabular-nums" /> points <span ref={earthSideRef} /> its limit
         <Cite id="bass2.flam.vs-1g" />
       </p>
       <div
@@ -86,12 +86,12 @@ export function TwinAnnotations({ layout }: { layout: StageLayout }) {
           <span className="absolute right-0 bottom-0 size-2.5 border-r border-b border-ink/60" />
         </div>
         <p className="absolute bottom-full left-0 mb-1.5 text-xs leading-4 whitespace-nowrap text-ink/70">
-          Stretch rate <i>a</i> = <span ref={stretchRef} className="num" /> s⁻¹{' '}
+          Stretch rate <i>a</i> = <span ref={stretchRef} className="tabular-nums" /> s⁻¹{' '}
           <Cite id="twin.stretch-rate" />
         </p>
         <div className="absolute top-full left-1/2 mt-2 -translate-x-1/2 text-center text-xs leading-4 whitespace-nowrap text-ink/70">
           <p>
-            <span ref={orbitMarginRef} className="num" /> points <span ref={orbitSideRef} /> its limit
+            <span ref={orbitMarginRef} className="tabular-nums" /> points <span ref={orbitSideRef} /> its limit
             <Cite id="twin.orbit-limit" />
             <span className="ml-2 text-muted">Model</span>
           </p>
@@ -130,7 +130,7 @@ function EarthStamp({ flame }: { flame: FlameState }) {
   if (flame.refusal !== null) {
     return (
       <Stamp key="refusal" origin="left">
-        Won’t stay lit below <span className="num">{EARTH_LIMIT_O2_PCT.toFixed(1)}%</span>{' '}
+        Won’t stay lit below <span className="tabular-nums">{EARTH_LIMIT_O2_PCT.toFixed(1)}%</span>{' '}
         <Cite id="bass2.flam.vs-1g" />
       </Stamp>
     )
@@ -138,7 +138,7 @@ function EarthStamp({ flame }: { flame: FlameState }) {
   if (flame.lit || flame.outAtPct === null) return null
   return (
     <Stamp key="out" origin="left">
-      Out at <span className="num">{flame.outAtPct.toFixed(1)}%</span>{' '}
+      Out at <span className="tabular-nums">{flame.outAtPct.toFixed(1)}%</span>{' '}
       <Cite id="bass2.flam.vs-1g" />
     </Stamp>
   )
@@ -148,7 +148,7 @@ function OrbitStamp({ flame }: { flame: FlameState }) {
   if (flame.refusal === 'below-ignition') {
     return (
       <Stamp key="ignition" origin="right">
-        Won’t ignite below <span className="num">~{IGNITION_LIMIT_O2_PCT}%</span> (BASS-II rods){' '}
+        Won’t ignite below <span className="tabular-nums">~{IGNITION_LIMIT_O2_PCT}%</span> (BASS-II rods){' '}
         <Cite id="bass2.ign.limit-14.5" />
         <span className="block text-xs leading-4 text-ink/70">
           A flame lit higher can keep burning lower
@@ -167,7 +167,7 @@ function OrbitStamp({ flame }: { flame: FlameState }) {
   if (flame.lit || flame.outAtPct === null) return null
   return (
     <Stamp key="out" origin="right">
-      Out at <span className="num">{flame.outAtPct.toFixed(2)}%</span> (model){' '}
+      Out at <span className="tabular-nums">{flame.outAtPct.toFixed(2)}%</span> (model){' '}
       <Cite id="twin.orbit-limit" />
     </Stamp>
   )

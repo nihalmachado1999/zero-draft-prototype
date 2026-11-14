@@ -8,7 +8,6 @@ import {
   FLAG_LABELS,
   GROUP_FLAGS,
   quarantineReason,
-  SAMPLE_TYPE_LABELS,
   SEVERITY_LABELS,
   severityOf,
   type Bass2Row,
@@ -23,39 +22,21 @@ import { replayPresetFor } from '../../lib/interpret'
 import { formatHash } from '../../lib/route'
 import { Cite } from '../Cite'
 import { StatusGlyph } from './glyphs'
+import { RawFields } from './RawFields'
 import { ShowTheMath } from './ShowTheMath'
 
 /** Appendix A tables quoted in claims.json, by PI. */
-const APPENDIX_TABLE_CLAIM: Record<string, string> = { Miller: 'bass2.table.a4', Olson: 'bass2.table.a5' }
+const APPENDIX_TABLE: Record<string, { claimId: string; name: string }> = {
+  Miller: { claimId: 'bass2.table.a4', name: 'Table A.4' },
+  Olson: { claimId: 'bass2.table.a5', name: 'Table A.5' },
+}
 
-type Field = { label: string; column: string; read?: (row: Bass2Row) => ReactNode }
-
-const num = (value: number | null, missing = 'Not a number') =>
-  value === null ? <span className="font-sans text-muted">{missing}</span> : value
-
-const FIELDS: Field[] = [
-  { label: 'PI', column: COLUMNS.pi },
-  { label: 'Test', column: COLUMNS.test },
-  { label: 'Date', column: COLUMNS.date, read: (row) => row.date },
-  { label: 'GMT day of year', column: COLUMNS.gmt, read: (row) => num(row.gmtDay) },
-  { label: 'Sample', column: COLUMNS.sample },
-  {
-    label: 'Material',
-    column: COLUMNS.material,
-    read: (row) => <span className="font-sans">{SAMPLE_TYPE_LABELS[row.sampleType]}</span>,
-  },
-  { label: 'Flow restrictor', column: COLUMNS.restrictor },
-  { label: 'Fan display', column: COLUMNS.fan },
-  { label: 'Air display', column: COLUMNS.air },
-  { label: 'Radiometer gain', column: COLUMNS.radiometer },
-  { label: 'Frames shot', column: COLUMNS.frames },
-  { label: 'Initial O2, %', column: COLUMNS.o2Init, read: (row) => num(row.o2InitPct, 'Not recorded') },
-  { label: 'Final O2, %', column: COLUMNS.o2Final, read: (row) => num(row.o2FinalPct, 'Not recorded') },
-  { label: 'Initial CO2, %', column: COLUMNS.co2Init, read: (row) => num(row.co2InitPct, 'Not recorded') },
-  { label: 'Final CO2, %', column: COLUMNS.co2Final, read: (row) => num(row.co2FinalPct, 'Not recorded') },
-  { label: 'Initial CO, ppm', column: COLUMNS.coInit, read: (row) => num(row.coInitPpm) },
-  { label: 'Final CO, ppm', column: COLUMNS.coFinal, read: (row) => num(row.coFinalPpm) },
-]
+/** Which CO cell stopped CO per 1% CO2 being worked out, as written: "the final CO cell reads “>500”". */
+function coCellProblem(row: Bass2Row): string {
+  const [which, column] = row.coFinalPpm === null ? ['final', COLUMNS.coFinal] : ['initial', COLUMNS.coInit]
+  const raw = (row.raw[column] ?? '').trim()
+  return raw === '' ? `the ${which} CO cell is empty` : `the ${which} CO cell reads “${raw}”, not a number`
+}
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -86,7 +67,7 @@ export function RecordDetails({ row, flow, forensic }: { row: Bass2Row; flow?: C
   const notes = testNoteClaimIds(row.testId)
   const dataset = getSource('psi-25')
   const datasetLink = dataset ? sourceLink(dataset) : null
-  const tableClaim = APPENDIX_TABLE_CLAIM[row.pi]
+  const table = APPENDIX_TABLE[row.pi]
   const outcome = useTestOutcomes()?.outcomes.find((o) => o.testId === row.testId)
   const replay = replayPresetFor(row.testId)
 
@@ -134,7 +115,7 @@ export function RecordDetails({ row, flow, forensic }: { row: Bass2Row; flow?: C
           <p className="text-sm leading-6 text-muted">
             CO per 1% CO2:{' '}
             {row.coPerCo2 === null ? (
-              'not worked out, a CO cell is not a number'
+              `not worked out, because ${coCellProblem(row)}`
             ) : (
               <>
                 <span className="tabular-nums text-ink">{Math.round(row.coPerCo2)}</span> ppm
@@ -160,8 +141,10 @@ export function RecordDetails({ row, flow, forensic }: { row: Bass2Row; flow?: C
               {flow.quote.trim()}
             </blockquote>
             <figcaption className="flex items-center gap-2 pl-3.5 text-xs text-muted">
-              Appendix A, report p. <span className="tabular-nums">{flow.reportPage}</span>, PDF p.{' '}
-              <span className="tabular-nums">{flow.pdfPage}</span>
+              <span>
+                Appendix A, report p. <span className="tabular-nums">{flow.reportPage}</span>, PDF p.{' '}
+                <span className="tabular-nums">{flow.pdfPage}</span>
+              </span>
               <span className="flex items-center gap-1 text-emerald">
                 <CircleCheck aria-hidden="true" className="size-3.5" />
                 Quote checked
@@ -201,29 +184,7 @@ export function RecordDetails({ row, flow, forensic }: { row: Bass2Row; flow?: C
       </Section>
 
       <Section title="Every field">
-        <table className="w-full table-fixed text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted">
-              <th className="w-32 pb-2 font-normal">Field</th>
-              <th className="pb-2 font-normal">Raw CSV cell</th>
-              <th className="w-36 pb-2 font-normal">Read as</th>
-            </tr>
-          </thead>
-          <tbody>
-            {FIELDS.map((field) => {
-              const raw = row.raw[field.column] ?? ''
-              return (
-                <tr key={field.column} className="border-t border-line align-top">
-                  <td className="py-1.5 pr-3 text-muted">{field.label}</td>
-                  <td className="num py-1.5 pr-3 break-words whitespace-pre-wrap">
-                    {raw === '' ? <span className="font-sans text-muted">Empty</span> : raw}
-                  </td>
-                  <td className="num py-1.5">{field.read ? field.read(row) : <span className="text-muted">–</span>}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <RawFields row={row} />
       </Section>
 
       <Section title="Sources">
@@ -233,7 +194,12 @@ export function RecordDetails({ row, flow, forensic }: { row: Bass2Row; flow?: C
         <p className="text-sm leading-6">
           BASS-II report, Appendix A, which lists calibrated and uncalibrated O2 and observations for every test
           <Cite id="bass2.table.o2-columns" />
-          {tableClaim && <Cite id={tableClaim} />}
+          {table && (
+            <>
+              ; this test’s row is in {table.name}
+              <Cite id={table.claimId} />
+            </>
+          )}
         </p>
         {datasetLink && (
           <a

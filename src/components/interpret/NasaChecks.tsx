@@ -91,8 +91,8 @@ export function NasaChecks() {
         <span className="flex flex-col gap-2">
           {m5Row && (
             <span className="text-sm leading-6">
-              The CSV’s final CO cell reads <span className="num">{m5Row.raw['Final CO (ppm)']}</span>, as does Table A.4
-              <Cite id="bass2.table.a4" />. The report text:
+              The CSV’s final CO cell reads <span className="tabular-nums">{m5Row.raw['Final CO (ppm)']}</span>, as does its row in Table A.4
+              <Cite id="bass2.table.a4-m5" />. The report text:
             </span>
           )}
           <NasaQuote id="bass2.co.over-range" />

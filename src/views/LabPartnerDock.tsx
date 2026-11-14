@@ -85,7 +85,8 @@ function OpenDock({ onClose }: { onClose: () => void }) {
         {empty && (
           <p className="text-sm leading-6 text-muted">
             Ask about the BASS-II fire tests. Lab Partner runs the app’s own models, changes the views to show you, and
-            cites NASA for every sentence. A script checks each quote and number before you see it.
+            cites a source for every sentence: NASA’s words, or the model or audit a number came from. A script checks
+            each quote and number before you see it.
           </p>
         )}
         {empty && <SuggestedQuestions busy={busy} />}

@@ -425,14 +425,14 @@ Each is a computed claim with its formula in the drawer: `rank.low-o2`, `rank.co
 - SIBAL fabric (27 tests): no fire moved the sensors past their resolution.
 - PMMA thin films (22 tests): only 2 burn-confirmed.
 - PMMA sphere section (2 tests): too few.
-- Nomex (3 tests): didn't ignite (`bass2.nomex`). Shown as a finding card that says "no sustained flame in any of the three": NASA's Appendix A note on F3 reads "Brief ignition flash, no sustained flame" (`bass2.note.f3`).
+- Nomex (3 tests): didn't ignite (`bass2.nomex`). Shown as a finding card that says "none of the three sustained a flame (`bass2.nomex`); F3 had only a brief ignition flash (`bass2.note.f3`)", each clause with its own footnote, because NASA's Appendix A note on F3 reads "Brief ignition flash, no sustained flame".
 - Wax candle (1 test): shot a burning droplet upstream (`bass2.wax-droplet`). Shown as a finding card. The card quotes `bass2.wax-droplet`; "upstream" is only in the Fig. 3.1 caption (PDF p. 54), which has no verified claim yet, so the card doesn't say it.
 - A ranked type whose weights sum to 0 over its own components: "Not scored at these weights".
 
 **Formula:**
 
 ```
-index = 100 × Σ(wᵢ · cᵢ) / Σ(wᵢ)    over the components the sample type has
+index = 100 × Σ(wᵢ · cᵢ) / Σ(wᵢ)    over its two components, low-O2 burning and CO yield
 ```
 
 - Default weights are equal. Weights run 0 to 1 in 0.05 steps, and at least one slider always stays above 0.

@@ -59,6 +59,8 @@ export const CO_SENSOR_CEILING_PPM = 1000
 export const MSG_VOLUME_M3 = 0.25
 /** N2 flow in the dilution calibration, cm³/min. Quoted: bass2.cstr.n2-flow (p. 116). */
 export const MSG_N2_FLOW_CC_MIN = 493
+/** The MSG's maximum N2 flow, cm³/min: "0.0005 m3/min maximum". Quoted: bass2.cstr.n2-max (p. 115). */
+export const MSG_N2_MAX_CC_MIN = 500
 /** US Lab pressurized volume, m³. Quoted: bass2.us-lab-volume (p. 8). */
 export const US_LAB_VOLUME_M3 = 106
 

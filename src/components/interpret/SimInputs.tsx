@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { FLOW_RANGE_CM_S } from '../../lib/burnTwin'
-import { CO_PPM_PER_PCT_CO2, SMAC_1_HOUR_PPM, SMAC_LONG_TERM_PPM, type Geometry } from '../../lib/cabin'
+import { CO_PPM_PER_PCT_CO2, MSG_N2_MAX_CC_MIN, SMAC_1_HOUR_PPM, SMAC_LONG_TERM_PPM, type Geometry } from '../../lib/cabin'
+import { getClaim } from '../../lib/claims'
 import { firstTime, kPa, logEntries, psia, simTime, volumeMarks, volumeScale } from '../../lib/interpret'
 import { interpretStore, useSim } from '../../lib/interpretStore'
 import { ROD_DIAMETERS_MM, type RodMm } from '../../lib/physics'
@@ -11,8 +12,6 @@ import { SimSlider } from './SimSlider'
 const set = interpretStore.setInput
 const fixed = (digits: number) => (value: number) => value.toFixed(digits)
 const volumeText = (m3: number) => (m3 < 10 ? m3.toFixed(2) : m3 < 100 ? m3.toFixed(1) : m3.toFixed(0))
-/** The N2 flow slider stops at the MSG's maximum, 0.0005 m³/min (bass2.cstr.n2-max). */
-const N2_MAX_CC_MIN = 500
 
 const SHAPES: readonly { value: Geometry; label: string }[] = [
   { value: 'opposed-slab', label: 'Opposed slab' },
@@ -44,9 +43,9 @@ function VolumeNote() {
       {marks && (
         <>
           This fire passes <span className="tabular-nums">{SMAC_1_HOUR_PPM}</span> ppm below{' '}
-          <span className="tabular-nums">{by(SMAC_1_HOUR_PPM)?.toFixed(1)}</span> m³ and{' '}
+          <span className="whitespace-nowrap tabular-nums">{by(SMAC_1_HOUR_PPM)?.toFixed(1)} m³</span> and{' '}
           <span className="tabular-nums">{SMAC_LONG_TERM_PPM}</span> ppm below{' '}
-          <span className="tabular-nums">{by(SMAC_LONG_TERM_PPM)?.toFixed(1)}</span> m³{' '}
+          <span className="whitespace-nowrap tabular-nums">{by(SMAC_LONG_TERM_PPM)?.toFixed(1)} m³</span>{' '}
           <Cite id="cabin.volume-limit" />.{' '}
         </>
       )}
@@ -170,14 +169,15 @@ export function SimInputs() {
           label="N2 flow"
           value={inputs.n2FlowCcMin}
           min={0}
-          max={N2_MAX_CC_MIN}
+          max={MSG_N2_MAX_CC_MIN}
           step={1}
           format={fixed(0)}
           unit="cm³/min"
           onChange={(n2FlowCcMin) => set({ n2FlowCcMin })}
           note={
             <>
-              Up to the MSG’s maximum, 0.0005 m³/min{' '}
+              Up to the MSG’s maximum,{' '}
+              <span className="tabular-nums">{getClaim('bass2.cstr.n2-max')?.value}</span> m³/min{' '}
               <Cite id="bass2.cstr.n2-max" />
             </>
           }

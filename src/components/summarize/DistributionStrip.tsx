@@ -115,6 +115,8 @@ export function DistributionStrip({ rows }: { rows: Bass2Row[] }) {
       },
     } satisfies Record<string, Chart>
   }, [rows])
+  // Confirmed burns left out of CO per CO2 because a CO cell reads "OR", ">500" or nothing.
+  const burnsWithoutCo = useMemo(() => rows.filter((row) => row.burnConfirmed && row.coPerCo2 === null).length, [rows])
 
   const slab = getClaim('bass2.co.370')?.value
   const rod = getClaim('bass2.co.550')?.value
@@ -161,6 +163,12 @@ export function DistributionStrip({ rows }: { rows: Bass2Row[] }) {
           )}
           {chart === charts.yields && (
             <p className="text-xs leading-5 text-muted">
+              {burnsWithoutCo > 0 && (
+                <>
+                  <span className="tabular-nums">{burnsWithoutCo}</span> more confirmed{' '}
+                  {burnsWithoutCo === 1 ? 'burn has' : 'burns have'} a CO cell that isn’t a number.{' '}
+                </>
+              )}
               Dashed lines: NASA’s averages, about <span className="tabular-nums">{slab}</span> for opposed slabs
               <Cite id="bass2.co.370" /> and <span className="tabular-nums">{rod}</span> for concurrent rods
               <Cite id="bass2.co.550" />

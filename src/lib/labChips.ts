@@ -2,6 +2,7 @@
 // on, named the way the footnote previews name sources ("BASS-II report, p. 76"), or after the
 // model a value came from ("Cabin model"). A chip opens the citation drawer on what it names.
 import { citePreview, getClaim, getSource, type Claim } from './claims'
+import { normalize } from './normalize'
 import type { Support, ToolResult } from './labProtocol'
 import type { ViewId } from './route'
 
@@ -38,6 +39,9 @@ export interface Chip {
   opens: string | Claim | null
 }
 
+/** Two chips that would show the same words from the same place are one chip. */
+const quoteKey = (place: string, quote: string) => `${place}:${normalize(quote)}`
+
 /** One chip per distinct place a sentence leans on. */
 export function chipsFor(supports: readonly Support[], tools: readonly ToolResult[]): Chip[] {
   const chips: Chip[] = []
@@ -45,14 +49,16 @@ export function chipsFor(supports: readonly Support[], tools: readonly ToolResul
   for (const support of supports) {
     let chip: Chip
     if (support.kind === 'quote') {
-      chip = { key: `${support.place}:${support.quote}`, label: support.place, opens: quoteClaim(support) }
+      chip = { key: quoteKey(support.place, support.quote), label: support.place, opens: quoteClaim(support) }
     } else {
       const claim = support.claimId ? getClaim(support.claimId) : undefined
       const tool = tools.find((t) => t.id === support.ref.split('.')[0])
       const label =
         claim?.kind === 'quoted' ? citePreview(claim) : tool?.view ? MODEL_NAMES[tool.view] : (claim?.text ?? 'Source')
       // One chip per name: two values from the same model share it (its drawer lists every input).
-      chip = { key: label, label, opens: claim?.verified ? claim.id : null }
+      // A quoted claim is keyed by its words too, so it merges with the same quote cited directly.
+      const key = claim?.kind === 'quoted' && claim.quote ? quoteKey(label, claim.quote) : label
+      chip = { key, label, opens: claim?.verified ? claim.id : null }
     }
     if (seen.has(chip.key)) continue
     seen.add(chip.key)

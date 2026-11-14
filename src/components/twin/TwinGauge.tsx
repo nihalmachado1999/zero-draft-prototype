@@ -75,8 +75,9 @@ export function TwinGauge({ layout }: { layout: StageLayout }) {
         <span
           key={o2}
           aria-hidden="true"
-          className="num absolute -translate-y-1/2 text-xs leading-4 text-muted"
-          style={{ right: layout.width - x + 12, top: gaugeY(layout, o2) }}
+          // Black behind the numeral, so the oxygen line passes under it rather than through it.
+          className="num absolute -translate-y-1/2 bg-window px-0.5 text-xs leading-4 text-muted"
+          style={{ right: layout.width - x + 10, top: gaugeY(layout, o2) }}
         >
           {o2}
         </span>
@@ -91,7 +92,7 @@ export function TwinGauge({ layout }: { layout: StageLayout }) {
         >
           <p className="text-muted">1g limit, PMMA rods, 4 cm/s forced flow</p>
           <p className="text-ink">
-            Earth limit <span className="num">{EARTH_LIMIT_O2_PCT.toFixed(1)}%</span>{' '}
+            Earth limit <span className="tabular-nums">{EARTH_LIMIT_O2_PCT.toFixed(1)}%</span>{' '}
             <Cite id="bass2.flam.vs-1g" />
           </p>
         </div>
@@ -102,7 +103,7 @@ export function TwinGauge({ layout }: { layout: StageLayout }) {
         <span aria-hidden="true" className="absolute top-0 left-0 h-px w-11 bg-cyan" />
         <div className="absolute top-0 w-64 -translate-y-2 text-xs leading-4" style={{ left: LABEL_GAP }}>
           <p className="text-ink">
-            Orbit limit <span ref={orbitLimitRef} className="num" />, model
+            Orbit limit <span ref={orbitLimitRef} className="tabular-nums" />, model
             {/* One footnote for the whole calculation; its drawer lists every source. */}
             <Cite id="twin.orbit-limit" />
           </p>

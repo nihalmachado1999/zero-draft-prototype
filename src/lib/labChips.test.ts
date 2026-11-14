@@ -39,6 +39,25 @@ describe('chipsFor', () => {
     expect(chips[2].opens).toMatchObject({ kind: 'quoted', verified: true, quote: 'zone of flow is unfortunately typical' })
   })
 
+  it('merges a quoted value and a quote of the same words from the same page', () => {
+    const show: ToolResult = { ...TWIN, id: 'tool#1', name: 'navigate', view: 'summarize', claimIds: ['bass2.o2forensic.p22b'] }
+    const supports: Support[] = [
+      { kind: 'tool', ref: 'tool#1.o2FinalPct', label: 'Final O2', claimId: 'bass2.o2forensic.p22b' },
+      {
+        kind: 'quote',
+        chunkId: 'c0440',
+        quote: '20.0 39.1 ---- 19.1',
+        sourceId: 'nasa-tm-20210011385',
+        place: 'BASS-II report, p. 107',
+        pdfPage: 115,
+        reportPage: 107,
+      },
+    ]
+    const chips = chipsFor(supports, [show])
+    expect(chips.map((chip) => chip.label)).toEqual(['BASS-II report, p. 107'])
+    expect(chips[0].opens).toBe('bass2.o2forensic.p22b')
+  })
+
   it('shows a value with no claim behind it as a plain label', () => {
     const chips = chipsFor([{ kind: 'tool', ref: 'tool#2.tests', label: 'Tests', claimId: null }], [
       { ...TWIN, id: 'tool#2', name: 'filter_tests', view: 'summarize' },

@@ -1110,6 +1110,20 @@
     "verified": true
   },
   {
+    "id": "bass2.table.a4-m5",
+    "topic": "tables",
+    "text": "Test M5's row in Table A.4: O2 22.2% to 19.0% calibrated, CO2 0.44% to 3.22%, CO 9 to >500 ppm",
+    "kind": "quoted",
+    "sourceId": "nasa-tm-20210011385",
+    "quote": "22.2 19.0 20.6 17.4 0.44 3.22 9 >500",
+    "locator": {
+      "pdfPage": 117,
+      "reportPage": 109,
+      "spansNextPage": false
+    },
+    "verified": true
+  },
+  {
     "id": "bass2.table.a5",
     "topic": "tables",
     "text": "Table A.5: Olson test matrix",
@@ -1796,7 +1810,7 @@
     "topic": "risk",
     "text": "ZERO-DRAFT Orbital Risk Index: our weighted mean of a sample type's component scores. Not a NASA rating.",
     "kind": "computed",
-    "formula": "index = 100 x sum(w_i x c_i) / sum(w_i), over the components the sample type has",
+    "formula": "index = 100 x sum(w_i x c_i) / sum(w_i), over its two components, low-O2 burning and CO yield",
     "inputs": ["rank.low-o2", "rank.co-yield"],
     "verified": true
   },

@@ -6,6 +6,7 @@ import {
   dilutionTimeMin,
   heatFromO2Drop,
   MSG_N2_FLOW_CC_MIN,
+  MSG_N2_MAX_CC_MIN,
   MSG_VOLUME_M3,
   o2DrawPctPerS,
   simulateCabin,
@@ -15,6 +16,7 @@ import {
   type CabinInputs,
   type CabinState,
 } from './cabin'
+import { getClaim } from './claims'
 
 // SPEC §8.2: every value within 0.5 %.
 const within = (actual: number, expected: number) =>
@@ -152,5 +154,13 @@ describe('extinction and model range', () => {
     expect(offPressure).toHaveLength(1)
     expect(offPressure[0].valid).toBe(false)
     expect(offPressure[0].invalidReason).toBe('Pressure is not 1 atm')
+  })
+})
+
+describe('constants quoted from the report', () => {
+  it('stops the N2 slider at the MSG maximum the report states, 0.0005 m3/min', () => {
+    const claim = getClaim('bass2.cstr.n2-max')
+    expect(claim?.unit).toBe('m3/min')
+    expect(MSG_N2_MAX_CC_MIN).toBeCloseTo((claim?.value ?? NaN) * 1e6, 6)
   })
 })

@@ -20,7 +20,7 @@ export function NasaQuote({ id }: { id: string }) {
   )
 }
 
-/** One of the two cards on the page: a 1px frame on the black stage, no shadow. */
+/** A text section below the console: a heading and NASA's words, no frame (frames are for instruments). */
 function Card({ id, title, children, appear = false }: { id?: string; title: string; children: ReactNode; appear?: boolean }) {
   return (
     <section
@@ -28,7 +28,7 @@ function Card({ id, title, children, appear = false }: { id?: string; title: str
       tabIndex={id ? -1 : undefined}
       aria-labelledby={id ? `${id}-title` : undefined}
       aria-label={id ? undefined : title}
-      className={`flex flex-col gap-4 rounded-sm border border-line p-6 ${appear ? 'appear origin-top-left' : ''}`}
+      className={`flex flex-col gap-4 ${appear ? 'appear origin-top-left' : ''}`}
     >
       <h2 id={id ? `${id}-title` : undefined} className="text-base leading-6 font-semibold">
         {title}
