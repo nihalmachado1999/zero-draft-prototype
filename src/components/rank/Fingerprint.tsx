@@ -3,12 +3,11 @@ import { useId, useRef, type FocusEvent, type KeyboardEvent, type ReactNode } fr
 import { citePreview, getClaim } from '../../lib/claims'
 import {
   COMPONENT_CLAIMS,
-  COMPONENT_KEYS,
   COMPONENT_LABELS,
   componentShares,
+  INDEX_KEYS,
   MIN_BURN_CONFIRMED,
-  TEST1_IGNITION_S,
-  type ComponentKey,
+  type IndexKey,
   type RiskEntity,
   type Scores,
   type Weights,
@@ -53,7 +52,7 @@ type FingerprintProps = {
 export function Fingerprint(props: FingerprintProps) {
   const { entity, scores, weights, row } = props
   const shares = componentShares(scores, weights)
-  const lastFilled = [...COMPONENT_KEYS].reverse().find((key) => (shares[key] ?? 0) > 0)
+  const lastFilled = [...INDEX_KEYS].reverse().find((key) => (shares[key] ?? 0) > 0)
   return (
     <div
       role="group"
@@ -63,7 +62,7 @@ export function Fingerprint(props: FingerprintProps) {
     >
       {/* Where 100 is, so lengths read against the same scale on every row. */}
       <span aria-hidden="true" className="absolute inset-y-0 right-0 w-px bg-line" />
-      {COMPONENT_KEYS.map((key, col) =>
+      {INDEX_KEYS.map((key, col) =>
         entity.components[key] ? (
           <Segment
             key={key}
@@ -83,7 +82,7 @@ export function Fingerprint(props: FingerprintProps) {
 }
 
 type SegmentProps = FingerprintProps & {
-  component: ComponentKey
+  component: IndexKey
   share: number
   score: number | undefined
   last: boolean
@@ -177,7 +176,7 @@ function Segment({ component, entity, share, score, last, index, weights, cell, 
               {component === 'coYield' && notes.coYield && <p className="text-muted">{notes.coYield}</p>}
             </>
           ) : (
-            <p>Not measured: {missingReason(component)}</p>
+            <p>Not measured: {missingReason()}</p>
           )}
           {claim && <p className="text-muted">{citePreview(claim)}. Click or press Enter for the source.</p>}
         </BarPreview>
@@ -187,7 +186,7 @@ function Segment({ component, entity, share, score, last, index, weights, cell, 
 }
 
 /** The measured value and the n tests behind it, in a line of the hover. */
-function valueLine(component: ComponentKey, entity: RiskEntity): ReactNode {
+function valueLine(component: IndexKey, entity: RiskEntity): ReactNode {
   const measured = entity.components[component]
   if (!measured) return null
   if (component === 'lowO2') {
@@ -198,32 +197,21 @@ function valueLine(component: ComponentKey, entity: RiskEntity): ReactNode {
       </>
     )
   }
-  if (component === 'coYield') {
-    return (
-      <>
-        Median {measured.value.toFixed(1)} ppm CO per 1% CO2, over {measured.n} burn-confirmed tests
-      </>
-    )
-  }
-  const tsS = measured.value * TEST1_IGNITION_S
   return (
     <>
-      t<sub>s</sub> {tsS.toFixed(1)} s, {measured.value.toFixed(2)} times Test 1’s {TEST1_IGNITION_S} s. From the
-      rod’s diameter, not from tests
+      Median {measured.value.toFixed(1)} ppm CO per 1% CO2, over {measured.n} burn-confirmed tests
     </>
   )
 }
 
 /** The same, for screen readers, without markup. */
-function valueWords(component: ComponentKey, entity: RiskEntity): string {
+function valueWords(component: IndexKey, entity: RiskEntity): string {
   const measured = entity.components[component]
   if (!measured) return 'not measured'
   if (component === 'lowO2') return `lowest final O2 ${measured.value.toFixed(1)}% in test ${measured.testId}, ${measured.n} tests`
-  if (component === 'coYield') return `median ${measured.value.toFixed(1)} ppm CO per 1% CO2, ${measured.n} tests`
-  return `t_s ${(measured.value * TEST1_IGNITION_S).toFixed(1)} seconds, from the rod's diameter`
+  return `median ${measured.value.toFixed(1)} ppm CO per 1% CO2, ${measured.n} tests`
 }
 
-function missingReason(component: ComponentKey): string {
-  if (component === 'ignitionGap') return 'the ignition gap is for rods only.'
+function missingReason(): string {
   return `fewer than ${MIN_BURN_CONFIRMED} burn-confirmed tests.`
 }

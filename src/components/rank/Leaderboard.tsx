@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { Leaderboard as Board } from '../../lib/risk'
-import { coverage, COMPONENT_KEYS, type Weights } from '../../lib/risk'
+import { INDEX_KEYS, type Weights } from '../../lib/risk'
 import { Cite } from '../Cite'
 import { Fingerprint, SLOT_ROOM, type FingerprintCell, type FingerprintNotes } from './Fingerprint'
 import { useReorder } from './reorder'
@@ -45,7 +45,7 @@ export function Leaderboard({ board, weights, notes, lowO2Note }: LeaderboardPro
       if (!delta) return
       event.preventDefault()
       const row = Math.min(rows.length - 1, Math.max(0, cell.row + delta[0]))
-      const col = Math.min(COMPONENT_KEYS.length - 1, Math.max(0, cell.col + delta[1]))
+      const col = Math.min(INDEX_KEYS.length - 1, Math.max(0, cell.col + delta[1]))
       listRef.current?.querySelector<HTMLElement>(`[data-fingerprint="${row}-${col}"]`)?.focus()
     },
     [rows.length],
@@ -65,8 +65,12 @@ export function Leaderboard({ board, weights, notes, lowO2Note }: LeaderboardPro
           ZERO-DRAFT Orbital Risk Index: our composite of measured BASS-II indicators. Not a NASA rating.
         </p>
         <p className="text-sm leading-5 text-muted">
-          Index = 100 × Σ w<sub>i</sub>c<sub>i</sub> ÷ Σ w<sub>i</sub>, over the components each sample type has.
-          Each score c<sub>i</sub> runs from 0 to 1, with 1 the riskiest.
+          Index = 100 × Σ w<sub>i</sub>c<sub>i</sub> ÷ Σ w<sub>i</sub>, over low-O2 burning and CO yield. Each score
+          c<sub>i</sub> runs from 0 to 1 across the ranked types: 1 for the lowest O2 or the highest CO yield.
+        </p>
+        <p className="text-sm leading-5 text-muted">
+          Ignition time isn’t in the index: a rod’s t<sub>s</sub> comes from its diameter alone
+          <Cite id="rank.solid-time" />, the same on Earth as in orbit. The ignition race below shows it.
         </p>
       </div>
 
@@ -96,10 +100,9 @@ export function Leaderboard({ board, weights, notes, lowO2Note }: LeaderboardPro
             </span>
           ))}
         </div>
-        <ol ref={listRef} aria-label="Sample types, riskiest first" className="relative min-w-0 flex-1">
+        <ol ref={listRef} aria-label="Sample types, highest index first" className="relative min-w-0 flex-1">
           <AnimatePresence initial={false} mode="popLayout">
             {rows.map((row, i) => {
-              const { measured, of } = coverage(row.entity)
               return (
                 <motion.li
                   key={row.entity.id}
@@ -116,7 +119,7 @@ export function Leaderboard({ board, weights, notes, lowO2Note }: LeaderboardPro
                       {row.entity.label}
                     </p>
                     <p className="text-xs leading-4 text-muted tabular-nums">
-                      {row.entity.tests} tests, {measured} of {of} components measured
+                      {row.entity.tests} tests, {row.entity.burnConfirmed} burn confirmed
                     </p>
                   </div>
                   <p className="num text-right text-[2rem] leading-none">

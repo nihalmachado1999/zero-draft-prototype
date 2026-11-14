@@ -2,8 +2,8 @@ import { Fragment, type ReactNode } from 'react'
 import { BURN_CO2_RISE_PCT } from '../../lib/audit'
 import { getClaim } from '../../lib/claims'
 import {
-  COMPONENT_KEYS,
   COMPONENT_LABELS,
+  INDEX_KEYS,
   MIN_BURN_CONFIRMED,
   MIN_COMPONENTS,
   type Leaderboard,
@@ -114,7 +114,7 @@ export function NotRanked({ groups, unscored }: { groups: UnrankedGroup[]; unsco
 
       <ul className="flex flex-col gap-3 text-sm leading-5">
         {unscored.map(({ entity }) => {
-          const own = COMPONENT_KEYS.filter((key) => entity.components[key]).map((key) =>
+          const own = INDEX_KEYS.filter((key) => entity.components[key]).map((key) =>
             lowerFirst(COMPONENT_LABELS[key]),
           )
           return (

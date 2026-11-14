@@ -1,10 +1,10 @@
-import type { ComponentKey } from '../../lib/risk'
+import type { IndexKey } from '../../lib/risk'
 
-// The three cyan intensities of the index bar's segments, one per component, and the matching
+// The two cyan intensities of the index bar's segments, one per component, and the matching
 // swatches beside the weight sliders. On the black stage, cyan at an opacity is cyan mixed with
 // black. Each label color keeps at least 4.5:1 contrast on its segment.
 export const SEGMENT_STYLE: Record<
-  ComponentKey,
+  IndexKey,
   {
     /** Fill of the segment and its slider swatch. */
     fill: string
@@ -19,9 +19,4 @@ export const SEGMENT_STYLE: Record<
 > = {
   lowO2: { fill: 'var(--color-cyan)', text: 'text-window', fit: '@max-[104px]:hidden' },
   coYield: { fill: 'color-mix(in srgb, var(--color-cyan) 55%, black)', text: 'text-ink', fit: '@max-[64px]:hidden' },
-  ignitionGap: {
-    fill: 'color-mix(in srgb, var(--color-cyan) 30%, black)',
-    text: 'text-ink',
-    fit: '@max-[80px]:hidden',
-  },
 }

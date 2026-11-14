@@ -3,13 +3,16 @@
 // rebuilds every measured component from the raw CSV and checks it against
 // docs/fixtures/risk-components.json.
 //
-// Three components, each scored 0 to 1, with 1 the riskiest:
-// - lowO2: the lowest final O2 among burn-confirmed tests. Min–max across the ranked types; lower is riskier.
-// - coYield: the median ppm of CO per 1% CO2 over burn-confirmed tests. Min–max across the ranked types.
-// - ignitionGap, rods only: measured as t_s ÷ 25 s, scored 1 − 25/t_s, the share of the rod's
-//   solid response time that NASA Test 1's 25 s igniter misses. Not min–max: that would score the
-//   6.35 mm rod 0 though Test 1 misses more than half of its t_s.
-// index = 100 × Σ(wᵢ·cᵢ) ÷ Σ(wᵢ), over the components the sample type has.
+// Two index components, both measured in BASS-II's orbit tests and both scored 0 to 1 by min–max
+// across the ranked types, so every ranked type is indexed over the same two things:
+// - lowO2: the lowest final O2 among burn-confirmed tests. Lower scores higher.
+// - coYield: the median ppm of CO per 1% CO2 over burn-confirmed tests. Higher scores higher.
+// index = 100 × Σ(wᵢ·cᵢ) ÷ Σ(wᵢ).
+//
+// The ignition gap (rods only, t_s ÷ 25 s) is still measured on each rod, and the ignition race
+// shows it, but it is not in the index. t_s = 0.7r²/α_s depends on the rod's diameter alone, with
+// no gravity in it: it would be the same number on Earth, so it can't say anything about orbital
+// risk. In the index it ranked the thickest rod first purely for being thick.
 import {
   burnStatus,
   roundTo,
@@ -28,17 +31,21 @@ import { median } from './stats'
 /** NASA Test 1's fixed ignition time, s. Quoted: bass2.ign.test1-25s (p. 68). */
 export const TEST1_IGNITION_S = 25
 
-/** A component needs this many burn-confirmed tests, and a ranked type needs this many components. */
+/** A component needs this many burn-confirmed tests, and a ranked type needs this many index components. */
 export const MIN_BURN_CONFIRMED = 3
 export const MIN_COMPONENTS = 2
 
 /** CO yield is kept and scored to this many decimals of ppm per 1% CO2. */
 export const CO_YIELD_DIGITS = 1
 
+/** What is measured on a sample type (SPEC §6). Only the IndexKeys go into the index. */
 export type ComponentKey = 'lowO2' | 'coYield' | 'ignitionGap'
 
+/** The components the index is built from. The ignition gap isn't one: see the top of this file. */
+export type IndexKey = Exclude<ComponentKey, 'ignitionGap'>
+
 /** Fingerprint order, left to right, and the slider order. */
-export const COMPONENT_KEYS: readonly ComponentKey[] = ['lowO2', 'coYield', 'ignitionGap']
+export const INDEX_KEYS: readonly IndexKey[] = ['lowO2', 'coYield']
 
 export const COMPONENT_LABELS: Record<ComponentKey, string> = {
   lowO2: 'Low-O2 burning',
@@ -90,7 +97,7 @@ export interface RiskEntity {
   burnConfirmed: number
   components: Partial<Record<ComponentKey, Measured>>
   findingClaimIds: string[]
-  /** At least 3 burn-confirmed tests and at least 2 components. Doesn't depend on the weights. */
+  /** At least 3 burn-confirmed tests and both index components. Doesn't depend on the weights. */
   ranked: boolean
   /** Flow direction of its tests, from Appendix A; 'None' where NASA doesn't state it. */
   flows: FlowCounts
@@ -165,7 +172,8 @@ export function riskEntities(rows: readonly Bass2Row[]): RiskEntity[] {
         burnConfirmed,
         components,
         findingClaimIds: FINDING_CLAIMS[type] ?? [],
-        ranked: burnConfirmed >= MIN_BURN_CONFIRMED && Object.keys(components).length >= MIN_COMPONENTS,
+        ranked:
+          burnConfirmed >= MIN_BURN_CONFIRMED && INDEX_KEYS.filter((key) => components[key]).length >= MIN_COMPONENTS,
         flows,
       },
     ]
@@ -175,7 +183,7 @@ export function riskEntities(rows: readonly Bass2Row[]): RiskEntity[] {
 // ---------------------------------------------------------------------------------------------
 // Scores
 
-export type Scores = Partial<Record<ComponentKey, number>>
+export type Scores = Partial<Record<IndexKey, number>>
 
 /** Min–max to 0…1. With no spread no type is riskier than another, so all score 0 (never NaN). */
 function minMax(value: number, min: number, max: number, lowerIsRiskier: boolean): number {
@@ -183,13 +191,7 @@ function minMax(value: number, min: number, max: number, lowerIsRiskier: boolean
   return lowerIsRiskier ? (max - value) / (max - min) : (value - min) / (max - min)
 }
 
-/** 1 − 25/t_s from the measured t_s ÷ 25 s. A t_s shorter than 25 s scores 0: Test 1 misses none of it. */
-export function ignitionGapScore(tsOver25: number): number {
-  if (!(tsOver25 > 0)) return 0
-  return Math.max(0, 1 - 1 / tsOver25)
-}
-
-/** Each ranked entity's component scores, 0 to 1 with 1 the riskiest. */
+/** Each ranked entity's index component scores, 0 to 1: 1 for the lowest O2 or the highest CO yield. */
 export function componentScores(ranked: readonly RiskEntity[]): Map<SampleType, Scores> {
   const range = (key: 'lowO2' | 'coYield') => {
     const values = ranked.flatMap((entity) => (entity.components[key] ? [entity.components[key].value] : []))
@@ -203,7 +205,6 @@ export function componentScores(ranked: readonly RiskEntity[]): Map<SampleType, 
       const scores: Scores = {}
       if (components.lowO2) scores.lowO2 = minMax(components.lowO2.value, lowO2.min, lowO2.max, true)
       if (components.coYield) scores.coYield = minMax(components.coYield.value, coYield.min, coYield.max, false)
-      if (components.ignitionGap) scores.ignitionGap = ignitionGapScore(components.ignitionGap.value)
       return [entity.id, scores]
     }),
   )
@@ -212,9 +213,9 @@ export function componentScores(ranked: readonly RiskEntity[]): Map<SampleType, 
 // ---------------------------------------------------------------------------------------------
 // Weights
 
-export type Weights = Record<ComponentKey, number>
+export type Weights = Record<IndexKey, number>
 
-export const EQUAL_WEIGHTS: Weights = { lowO2: 1, coYield: 1, ignitionGap: 1 }
+export const EQUAL_WEIGHTS: Weights = { lowO2: 1, coYield: 1 }
 export const WEIGHT_MAX = 1
 export const WEIGHT_STEP = 0.05
 
@@ -222,16 +223,16 @@ export const WEIGHT_STEP = 0.05
  * Sets one weight, on the slider's 0.05 steps from 0 to 1. At least one weight always stays above
  * 0: taking the last one to 0 leaves it at one step.
  */
-export function setWeight(weights: Weights, key: ComponentKey, value: number): Weights {
+export function setWeight(weights: Weights, key: IndexKey, value: number): Weights {
   const stepped = Math.round(Math.min(WEIGHT_MAX, Math.max(0, value)) / WEIGHT_STEP) * WEIGHT_STEP
   let next = Number(stepped.toFixed(2))
-  const others = COMPONENT_KEYS.filter((k) => k !== key).reduce((sum, k) => sum + weights[k], 0)
+  const others = INDEX_KEYS.filter((k) => k !== key).reduce((sum, k) => sum + weights[k], 0)
   if (next <= 0 && others <= 0) next = WEIGHT_STEP
   return next === weights[key] ? weights : { ...weights, [key]: next }
 }
 
 export function isEqualWeights(weights: Weights): boolean {
-  return COMPONENT_KEYS.every((key) => weights[key] === weights[COMPONENT_KEYS[0]])
+  return INDEX_KEYS.every((key) => weights[key] === weights[INDEX_KEYS[0]])
 }
 
 /**
@@ -241,7 +242,7 @@ export function isEqualWeights(weights: Weights): boolean {
 export function riskIndex(scores: Scores, weights: Weights): number | null {
   let weighted = 0
   let total = 0
-  for (const key of COMPONENT_KEYS) {
+  for (const key of INDEX_KEYS) {
     const score = scores[key]
     if (score === undefined) continue
     const weight = Math.max(0, weights[key])
@@ -258,7 +259,7 @@ export interface LeaderboardRow {
   entity: RiskEntity
   scores: Scores
   index: number
-  /** 1 for the riskiest. */
+  /** 1 for the highest index. */
   rank: number
 }
 
@@ -272,7 +273,7 @@ export interface Leaderboard {
 const TIE = 1e-9
 const byId = (a: RiskEntity, b: RiskEntity) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
 
-/** The ranked entities, riskiest first at these weights. Ties sort by sample type id. */
+/** The ranked entities, highest index first at these weights. Ties sort by sample type id. */
 export function leaderboard(entities: readonly RiskEntity[], weights: Weights): Leaderboard {
   const ranked = entities.filter((entity) => entity.ranked)
   const scores = componentScores(ranked)
@@ -294,20 +295,20 @@ export function leaderboard(entities: readonly RiskEntity[], weights: Weights): 
  * They add up to the index exactly; each row's bar is cut into these segments. Components it
  * lacks, or every share when its weights sum to 0, are absent.
  */
-export function componentShares(scores: Scores, weights: Weights): Partial<Record<ComponentKey, number>> {
-  const own = COMPONENT_KEYS.filter((key) => scores[key] !== undefined)
+export function componentShares(scores: Scores, weights: Weights): Partial<Record<IndexKey, number>> {
+  const own = INDEX_KEYS.filter((key) => scores[key] !== undefined)
   const total = own.reduce((sum, key) => sum + Math.max(0, weights[key]), 0)
   if (total <= 0) return {}
-  const shares: Partial<Record<ComponentKey, number>> = {}
+  const shares: Partial<Record<IndexKey, number>> = {}
   for (const key of own) shares[key] = (100 * Math.max(0, weights[key]) * (scores[key] as number)) / total
   return shares
 }
 
-/** The component with the largest weighted share; on a tie, the first in COMPONENT_KEYS order. */
-export function biggestFactor(scores: Scores, weights: Weights): ComponentKey | null {
+/** The component with the largest weighted share; on a tie, the first in INDEX_KEYS order. */
+export function biggestFactor(scores: Scores, weights: Weights): IndexKey | null {
   const shares = componentShares(scores, weights)
-  let best: ComponentKey | null = null
-  for (const key of COMPONENT_KEYS) {
+  let best: IndexKey | null = null
+  for (const key of INDEX_KEYS) {
     const share = shares[key]
     if (share === undefined) continue
     if (best === null || share > (shares[best] as number) + TIE) best = key
@@ -315,21 +316,16 @@ export function biggestFactor(scores: Scores, weights: Weights): ComponentKey | 
   return best
 }
 
-/** The headline above the leaderboard: who ranks riskiest at these weights, and why. */
+/** The headline above the leaderboard: who tops the index at these weights, and why. */
 export function leaderHeadline(
   board: Leaderboard,
   weights: Weights,
-): { entity: RiskEntity; factor: ComponentKey; measured: Measured } | null {
+): { entity: RiskEntity; factor: IndexKey; measured: Measured } | null {
   const leader = board.rows[0]
   if (!leader) return null
   const factor = biggestFactor(leader.scores, weights)
   const measured = factor ? leader.entity.components[factor] : undefined
   return factor && measured ? { entity: leader.entity, factor, measured } : null
-}
-
-/** "2 of 3 components measured". */
-export function coverage(entity: RiskEntity): { measured: number; of: number } {
-  return { measured: Object.keys(entity.components).length, of: COMPONENT_KEYS.length }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -379,7 +375,8 @@ export function unrankedGroups(entities: readonly RiskEntity[], rows: readonly B
     } else if (members.every((entity) => entity.burnConfirmed < MIN_BURN_CONFIRMED)) {
       reason = { kind: 'few-burns', burnConfirmed }
     } else {
-      reason = { kind: 'few-components', components: Math.max(...members.map((e) => Object.keys(e.components).length)) }
+      const indexed = (e: RiskEntity) => INDEX_KEYS.filter((key) => e.components[key]).length
+      reason = { kind: 'few-components', components: Math.max(...members.map(indexed)) }
     }
     return {
       family,

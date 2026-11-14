@@ -377,18 +377,18 @@ Moving the O2 slider during a drain stops the drain.
 
 **"Hidden" risk** means how much more dangerous a sample type looks in BASS-II than Earth screening would suggest, built only from measured or cited quantities.
 
-**Components.** Three, each scored 0–1 with 1 the riskiest:
+**Components.** Two, each measured in BASS-II's orbit tests and scored 0–1 by min–max across the 8 ranked sample types:
 1. **Low-oxygen burning:** the lowest final O2 among burn-confirmed tests. Lower means riskier. Min–max across the 8 ranked sample types.
    - Label it honestly, under its slider caption, computed from bass2.json: "Also reflects what was tested: slab tests never started below 17.9% O2; rod tests started as low as 13.6%." These are the lowest starting O2 of usable slab and rod tests (`risk.lowestInitialO2`). Not 16.8%: that is the lowest final O2 a slab reached.
 2. **CO yield:** the median ppm of CO per 1% CO2 over burn-confirmed tests, kept to 0.1 as shown (so the index can be redone from the screen). Min–max across the 8 ranked sample types.
    - Its hover adds: "Slabs were only tested in opposed flow; rods mix flow directions."
-3. **Earth-test ignition gap,** rods only. Measured as t_s ÷ 25 s; scored 1 − 25/t_s, the share of the rod's ignition time that the 25 s Earth igniter misses: 0.575, 0.811 and 0.894 for 6.35, 9.525 and 12.7 mm (`bass2.ign.ts-def`, `bass2.ign.test1-25s`). It is not min–max normalized: that scored the 6.35 mm rod as 0.
+Each is a computed claim with its formula in the drawer: `rank.low-o2`, `rank.co-yield`, and the index itself `rank.index`.
 
-Each is a computed claim with its formula in the drawer: `rank.low-o2`, `rank.co-yield`, `rank.ignition-gap` (via `rank.solid-time`), and the index itself `rank.index`.
+**The ignition gap is not a component** (changed 14 Nov). It was t_s ÷ 25 s, scored 1 − 25/t_s. But t_s = 0.7r²/α_s depends only on the rod's diameter: there is no gravity in it, so it would be the same number on Earth and says nothing about orbital risk. In the index it put the 12.7 mm rod first purely for being the thickest. It is still measured on each rod (`docs/fixtures/risk-components.json` keeps it) and the ignition race (F3c) shows it. Under the formula, the view says: "Ignition time isn't in the index: a rod's t_s comes from its diameter alone, the same on Earth as in orbit. The ignition race below shows it." (`rank.solid-time`).
 
 **Heat release is not a component.** The CSV has no burn times, and heat is calculated from O2 use anyway, so it would double-count.
 
-**Measured values** (the test fixture):
+**Measured values** (the test fixture; the ignition gap column is measured but not in the index):
 
 | Sample type | Tests | Burn confirmed | Low-O2 burning | CO yield (ppm per %) | Ignition gap |
 |---|---|---|---|---|---|
@@ -416,14 +416,14 @@ index = 100 × Σ(wᵢ · cᵢ) / Σ(wᵢ)    over the components the sample typ
 ```
 
 - Default weights are equal. Weights run 0 to 1 in 0.05 steps, and at least one slider always stays above 0.
-- Each row shows its coverage, e.g. "2 of 3 components measured".
-- If a sample type's weights over its own components sum to 0 (e.g. only the gap slider is up; slabs have no gap), it shows "Not scored at these weights" and moves to the unranked list. Never divide by zero.
+- Each row shows its tests and burn-confirmed tests, e.g. "4 tests, 4 burn confirmed". (Every ranked type has both components, so a coverage count would always read "2 of 2".)
+- If a sample type's weights over its own components sum to 0, it shows "Not scored at these weights" and moves to the unranked list. Never divide by zero. With the real data this can't happen (every ranked type has both components and one weight always stays above 0), but the code keeps the guard.
 - Ties sort by sample type id.
-- With equal weights the index is: rod 12.7 mm 72.0, slab 2 mm 63.5, rod 9.525 mm 60.4, rod 6.35 mm 53.5, slab 3 mm 47.9, slab 1 mm 43.5, slab 5 mm 34.6, slab 4 mm 25.9.
+- With equal weights the index is: slab 2 mm 63.5, rod 12.7 mm 63.3, rod 6.35 mm 51.5, rod 9.525 mm 50.0, slab 3 mm 47.9, slab 1 mm 43.5, slab 5 mm 34.6, slab 4 mm 25.9. The top two are 0.2 apart: don't present the leader as a finding.
 
 **Layout** (pure black stage, in the Overview's language: no cards, borders or shadows; rows separated by space, not lines):
-- A headline above the leaderboard, Archivo about 20px, computed by `risk.leaderHeadline` and updating live with the weights: "{leader} ranks riskiest at these weights. Its biggest factor: {phrase}." The biggest factor is the component with the largest weighted share. Phrases: low-O2 "it burned down to {v}% oxygen ({test})"; CO yield "it made a median {v} ppm CO per 1% CO2"; ignition gap "it needs {t_s} s of heating, {ratio} times the Earth test's 25 s igniter" (25 s with its Cite). No hardcoded numbers.
-- Rows with large rank numerals in JetBrains Mono (muted, the leader's in ink), the name, the index value large in JetBrains Mono beside it, and a "risk fingerprint": one wide horizontal bar filling the rest of the row. Its length is the index on a 0–100 scale shared by every row, split into one segment per component; each segment's length is that component's weighted share, wᵢcᵢ ÷ Σwᵢ × 100 (`risk.componentShares`), so the segments add up exactly to the index. Three cyan intensities with 2px gaps (cut from the segment's fill, so lengths stay exact), the component name inside each segment when it fits, and a matching swatch beside each slider label. A missing component is a short dashed slot labelled "Not measured".
+- A headline above the leaderboard, Archivo about 20px, computed by `risk.leaderHeadline` and updating live with the weights: "{leader} tops the index at these weights. Its biggest factor: {phrase}." The biggest factor is the component with the largest weighted share. Phrases: low-O2 "it burned down to {v}% oxygen ({test})"; CO yield "it made a median {v} ppm CO per 1% CO2". No hardcoded numbers.
+- Rows with large rank numerals in JetBrains Mono (muted, the leader's in ink), the name, the index value large in JetBrains Mono beside it, and a "risk fingerprint": one wide horizontal bar filling the rest of the row. Its length is the index on a 0–100 scale shared by every row, split into one segment per component; each segment's length is that component's weighted share, wᵢcᵢ ÷ Σwᵢ × 100 (`risk.componentShares`), so the segments add up exactly to the index. Two cyan intensities with 2px gaps (cut from the segment's fill, so lengths stay exact), the component name inside each segment when it fits, and a matching swatch beside each slider label. A missing component is a short dashed slot labelled "Not measured".
 - Weight sliders above the list. At 1440×900 the leaderboard and its sliders fit in the first screen; the map and the race sit below.
 - Hovering or focusing a segment shows the measured value, the n tests, its 0–1 score and its footnote number and source; clicking the segment opens the citation drawer. (A hover preview holds no buttons, CLAUDE.md interaction 10, so the segment itself is the citation.) Arrow keys move between segments and rows.
 - Under the title, muted: "ZERO-DRAFT Orbital Risk Index: our composite of measured BASS-II indicators. Not a NASA rating."
@@ -432,7 +432,7 @@ index = 100 × Σ(wᵢ · cᵢ) / Σ(wᵢ)    over the components the sample typ
 
 **Acceptance:** `risk.test.ts` covers:
 - the measured values in `risk-components.json`, recomputed from the real CSV
-- normalization (min–max for low-O2 burning and CO yield; 1 − 25/t_s for the ignition gap)
+- normalization (min–max for low-O2 burning and CO yield), and the ignition gap measured but left out of the scores
 - missing components, and "Not scored at these weights" without dividing by zero
 - the rule: fewer than 3 burn-confirmed tests, or fewer than 2 components, means not ranked
 - the equal-weight index values above
@@ -742,7 +742,8 @@ export interface TestOutcomesFile {         // public/data/test-outcomes.json (F
 
 // Orbital Risk Index (F3a), computed at runtime by lib/risk.ts from bass2.json; not stored in a file.
 // Three components; heat release is not one (F3a says why).
-export type ComponentKey = 'lowO2' | 'coYield' | 'ignitionGap'
+export type ComponentKey = 'lowO2' | 'coYield' | 'ignitionGap'   // what is measured
+export type IndexKey = 'lowO2' | 'coYield'                        // what the index is built from (F3a says why)
 export interface Measured {
   value: number; unit: string
   n: number | null                   // tests it was measured over; null for ignitionGap, which comes from the rod's diameter
@@ -754,7 +755,7 @@ export interface RiskEntity {
   tests: number; burnConfirmed: number
   components: Partial<Record<ComponentKey, Measured>>
   findingClaimIds: string[]          // Nomex: bass2.nomex; wax candle: bass2.wax-droplet
-  ranked: boolean                    // >= 3 burn-confirmed tests and >= 2 components; doesn't depend on the weights
+  ranked: boolean                    // >= 3 burn-confirmed tests and both index components; doesn't depend on the weights
   flows: Partial<Record<'Opposed' | 'Concurrent' | 'Stagnation' | 'None', number>>   // flow direction counts, from Appendix A
 }
 // SampleFamily: 'rod' | 'slab' | 'film' | 'sphere' | 'sibal' | 'nomex' | 'wax'

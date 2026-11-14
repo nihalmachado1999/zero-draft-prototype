@@ -6,13 +6,11 @@ import { compileBass2, type Bass2Row, type FlowByTest, type SampleType } from '.
 import { solidResponseTimeS } from './physics'
 import {
   biggestFactor,
-  COMPONENT_KEYS,
   componentScores,
   componentShares,
-  coverage,
   EQUAL_WEIGHTS,
   familyFlows,
-  ignitionGapScore,
+  INDEX_KEYS,
   isEqualWeights,
   leaderboard,
   leaderHeadline,
@@ -34,7 +32,7 @@ const entity = (id: string): RiskEntity => {
   return found
 }
 const order = (weights: Weights) => leaderboard(entities, weights).rows.map((row) => row.entity.id)
-const only = (key: keyof Weights): Weights => ({ lowO2: 0, coYield: 0, ignitionGap: 0, [key]: 1 })
+const only = (key: keyof Weights): Weights => ({ lowO2: 0, coYield: 0, [key]: 1 })
 
 type ExpectedMeasured = { value: number; unit: string; n: number | null; test?: string }
 type ExpectedEntity = {
@@ -151,13 +149,10 @@ describe('scores', () => {
     expect(score('pmma-rod-9.525').coYield).toBe(0)
   })
 
-  it('scores the ignition gap as 1 − 25/t_s, not min–max: the 6.35 mm rod is not 0', () => {
-    expect(score('pmma-rod-6.35').ignitionGap).toBeCloseTo(0.575, 3)
-    expect(score('pmma-rod-9.525').ignitionGap).toBeCloseTo(0.811, 3)
-    expect(score('pmma-rod-12.7').ignitionGap).toBeCloseTo(0.894, 3)
-    expect(ignitionGapScore(1)).toBe(0)
-    expect(ignitionGapScore(0.5)).toBe(0)
-    expect(ignitionGapScore(0)).toBe(0)
+  it('leaves the ignition gap out of the scores: t_s comes from the rod diameter alone, the same on Earth', () => {
+    // Still measured on every rod (the fixture's ignitionGap), just not scored.
+    expect(entity('pmma-rod-12.7').components.ignitionGap).toBeDefined()
+    for (const s of scores.values()) expect(Object.keys(s).sort()).toEqual(['coYield', 'lowO2'])
   })
 
   it('keeps every score between 0 and 1', () => {
@@ -178,41 +173,40 @@ describe('scores', () => {
 })
 
 describe('missing components', () => {
-  it('gives slabs no ignition gap and indexes them over their own 2 components', () => {
-    const slab = entity('pmma-slab-2')
-    expect(slab.components.ignitionGap).toBeUndefined()
-    expect(coverage(slab)).toEqual({ measured: 2, of: 3 })
-    expect(coverage(entity('pmma-rod-6.35'))).toEqual({ measured: 3, of: 3 })
+  it('indexes rods and slabs over the same 2 components', () => {
+    expect(entity('pmma-slab-2').components.ignitionGap).toBeUndefined()
+    for (const e of entities.filter((x) => x.ranked)) {
+      expect(INDEX_KEYS.every((key) => e.components[key])).toBe(true)
+    }
     expect(riskIndex({ lowO2: 0.5, coYield: 1 }, EQUAL_WEIGHTS)).toBeCloseTo(75, 10)
   })
 
   it('says "Not scored at these weights" (null) when a type has weight only on components it lacks', () => {
-    expect(riskIndex({ lowO2: 0.5, coYield: 1 }, only('ignitionGap'))).toBeNull()
+    expect(riskIndex({ lowO2: 0.5 }, only('coYield'))).toBeNull()
     expect(riskIndex({}, EQUAL_WEIGHTS)).toBeNull()
   })
 
-  it('moves slabs to the unscored list when only the ignition gap has weight', () => {
-    const board = leaderboard(entities, only('ignitionGap'))
-    expect(board.rows.map((row) => row.entity.id)).toEqual(['pmma-rod-12.7', 'pmma-rod-9.525', 'pmma-rod-6.35'])
-    expect(board.unscored.map((u) => u.entity.id)).toEqual([
-      'pmma-slab-1',
-      'pmma-slab-2',
-      'pmma-slab-3',
-      'pmma-slab-4',
-      'pmma-slab-5',
-    ])
+  it('moves a type to the unscored list, without dividing by zero, when its only weighted component is missing', () => {
+    // Can't happen with the real data (every ranked type has both), so take CO yield off one.
+    const { coYield: _, ...rest } = entity('pmma-slab-2').components
+    const lopsided = entities.map((e) => (e.id === 'pmma-slab-2' ? { ...e, components: rest } : e))
+    const board = leaderboard(lopsided, only('coYield'))
+    expect(board.unscored.map((u) => u.entity.id)).toEqual(['pmma-slab-2'])
+    expect(board.rows).toHaveLength(7)
     for (const row of board.rows) expect(Number.isFinite(row.index)).toBe(true)
   })
 })
 
 describe('the index at equal weights', () => {
-  it('matches the agreed values, riskiest first', () => {
+  it('matches the agreed values, highest first', () => {
+    // 50 × (low-O2 score + CO yield score), from the fixture's measured values: e.g. slab 2 mm is
+    // 50 × ((18.4 − 17.1)/4.8 + 1) = 63.54; rod 12.7 mm is 50 × ((18.4 − 14.2)/4.8 + (334.1 − 291.4)/109.4) = 63.27.
     const board = leaderboard(entities, EQUAL_WEIGHTS)
     expect(board.rows.map((row) => [row.entity.id, Number(row.index.toFixed(1))])).toEqual([
-      ['pmma-rod-12.7', 72.0],
       ['pmma-slab-2', 63.5],
-      ['pmma-rod-9.525', 60.4],
-      ['pmma-rod-6.35', 53.5],
+      ['pmma-rod-12.7', 63.3],
+      ['pmma-rod-6.35', 51.5],
+      ['pmma-rod-9.525', 50.0],
       ['pmma-slab-3', 47.9],
       ['pmma-slab-1', 43.5],
       ['pmma-slab-5', 34.6],
@@ -223,7 +217,7 @@ describe('the index at equal weights', () => {
   })
 
   it('is the same at any equal weight', () => {
-    const half: Weights = { lowO2: 0.5, coYield: 0.5, ignitionGap: 0.5 }
+    const half: Weights = { lowO2: 0.5, coYield: 0.5 }
     expect(isEqualWeights(half)).toBe(true)
     expect(order(half)).toEqual(order(EQUAL_WEIGHTS))
   })
@@ -261,9 +255,9 @@ describe('reordering when weights change', () => {
 
   it('moves a row when one slider moves', () => {
     const before = order(EQUAL_WEIGHTS)
-    const after = order(setWeight(EQUAL_WEIGHTS, 'ignitionGap', 0))
+    const after = order(setWeight(EQUAL_WEIGHTS, 'coYield', 0))
     expect(after).not.toEqual(before)
-    expect(after[0]).toBe('pmma-slab-2')
+    expect(after[0]).toBe('pmma-rod-9.525')
   })
 })
 
@@ -278,7 +272,7 @@ describe('setWeight', () => {
     const one = only('coYield')
     const next = setWeight(one, 'coYield', 0)
     expect(next.coYield).toBe(0.05)
-    expect(COMPONENT_KEYS.some((key) => next[key] > 0)).toBe(true)
+    expect(INDEX_KEYS.some((key) => next[key] > 0)).toBe(true)
     expect(setWeight(next, 'lowO2', 0.5).lowO2).toBe(0.5)
   })
 
@@ -292,8 +286,7 @@ describe('segment shares and the headline', () => {
     EQUAL_WEIGHTS,
     only('lowO2'),
     only('coYield'),
-    only('ignitionGap'),
-    { lowO2: 0.35, coYield: 0.8, ignitionGap: 0.05 },
+    { lowO2: 0.35, coYield: 0.8 },
   ]
 
   it('cuts each row into segments that add up exactly to its index', () => {
@@ -310,16 +303,17 @@ describe('segment shares and the headline', () => {
     const slab = leaderboard(entities, EQUAL_WEIGHTS).rows.find((row) => row.entity.id === 'pmma-slab-2')!
     const shares = componentShares(slab.scores, EQUAL_WEIGHTS)
     expect(shares.coYield).toBeCloseTo(50, 10)
-    expect(shares.ignitionGap).toBeUndefined()
-    expect(componentShares(slab.scores, only('ignitionGap'))).toEqual({})
+    expect(shares.lowO2).toBeCloseTo((100 * (18.4 - 17.1)) / 4.8 / 2, 10)
+    expect(componentShares({ lowO2: 0.5 }, EQUAL_WEIGHTS)).toEqual({ lowO2: 50 })
+    expect(componentShares({ lowO2: 0.5 }, only('coYield'))).toEqual({})
   })
 
-  it('at equal weights: the 12.7 mm rod leads, and its biggest factor is the ignition gap', () => {
-    // Its weighted shares: low-O2 29.2, CO yield 13.0, ignition gap 29.8.
+  it('at equal weights: the 2 mm slab leads, and its biggest factor is CO yield', () => {
+    // Its weighted shares: low-O2 13.5, CO yield 50.0.
     const headline = leaderHeadline(leaderboard(entities, EQUAL_WEIGHTS), EQUAL_WEIGHTS)
-    expect(headline?.entity.id).toBe('pmma-rod-12.7')
-    expect(headline?.factor).toBe('ignitionGap')
-    expect(headline?.measured.value).toBeCloseTo(solidResponseTimeS(12.7) / 25, 10)
+    expect(headline?.entity.id).toBe('pmma-slab-2')
+    expect(headline?.factor).toBe('coYield')
+    expect(headline?.measured.value).toBe(400.8)
   })
 
   it('follows the weights', () => {
@@ -332,13 +326,11 @@ describe('segment shares and the headline', () => {
     ])
     const co = leaderHeadline(leaderboard(entities, only('coYield')), only('coYield'))
     expect([co?.entity.id, co?.factor, co?.measured.value]).toEqual(['pmma-slab-2', 'coYield', 400.8])
-    const gap = leaderHeadline(leaderboard(entities, only('ignitionGap')), only('ignitionGap'))
-    expect([gap?.entity.id, gap?.factor]).toEqual(['pmma-rod-12.7', 'ignitionGap'])
   })
 
   it('breaks a tie for biggest factor in component order', () => {
     expect(biggestFactor({ lowO2: 0.5, coYield: 0.5 }, EQUAL_WEIGHTS)).toBe('lowO2')
-    expect(biggestFactor({ lowO2: 0.5, coYield: 0.5 }, only('ignitionGap'))).toBeNull()
+    expect(biggestFactor({ lowO2: 0.5 }, only('coYield'))).toBeNull()
   })
 })
 

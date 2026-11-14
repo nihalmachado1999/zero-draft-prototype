@@ -3,38 +3,32 @@ import { useId, type ReactNode } from 'react'
 import { rankStore } from '../../lib/rankStore'
 import {
   COMPONENT_CLAIMS,
-  COMPONENT_KEYS,
   COMPONENT_LABELS,
+  INDEX_KEYS,
   isEqualWeights,
-  TEST1_IGNITION_S,
   WEIGHT_MAX,
   WEIGHT_STEP,
-  type ComponentKey,
+  type IndexKey,
   type Weights,
 } from '../../lib/risk'
 import { Cite } from '../Cite'
 import { SEGMENT_STYLE } from './segments'
 
-const HINTS: Record<ComponentKey, ReactNode> = {
+const HINTS: Record<IndexKey, ReactNode> = {
   lowO2: 'Lowest O2 where BASS-II saw it burn',
   coYield: 'Median ppm CO per 1% CO2',
-  ignitionGap: (
-    <>
-      Share of t<sub>s</sub> the {TEST1_IGNITION_S} s igniter misses, rods only
-    </>
-  ),
 }
 
 /**
- * The three weight sliders. Each takes effect at once and the leaderboard reorders (CLAUDE.md
+ * The two weight sliders. Each takes effect at once and the leaderboard reorders (CLAUDE.md
  * interaction 13). At least one weight always stays above 0 (risk.setWeight), so the last one
  * up stops at its first step. Each label has a swatch in its segment's color.
  */
 export function WeightSliders({ weights, lowO2Note }: { weights: Weights; lowO2Note: ReactNode | null }) {
   return (
     <div className="flex items-start gap-8">
-      <div className="grid flex-1 grid-cols-3 gap-8">
-        {COMPONENT_KEYS.map((key) => (
+      <div className="grid flex-1 grid-cols-2 gap-8">
+        {INDEX_KEYS.map((key) => (
           <WeightSlider key={key} component={key} weight={weights[key]} note={key === 'lowO2' ? lowO2Note : null} />
         ))}
       </div>
@@ -51,7 +45,7 @@ export function WeightSliders({ weights, lowO2Note }: { weights: Weights; lowO2N
   )
 }
 
-function WeightSlider({ component, weight, note }: { component: ComponentKey; weight: number; note: ReactNode | null }) {
+function WeightSlider({ component, weight, note }: { component: IndexKey; weight: number; note: ReactNode | null }) {
   const id = useId()
   return (
     <div className="min-w-0">

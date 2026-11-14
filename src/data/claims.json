@@ -1766,7 +1766,7 @@
     "text": "ZERO-DRAFT Orbital Risk Index: our weighted mean of a sample type's component scores. Not a NASA rating.",
     "kind": "computed",
     "formula": "index = 100 x sum(w_i x c_i) / sum(w_i), over the components the sample type has",
-    "inputs": ["rank.low-o2", "rank.co-yield", "rank.ignition-gap"],
+    "inputs": ["rank.low-o2", "rank.co-yield"],
     "verified": true
   },
   {
