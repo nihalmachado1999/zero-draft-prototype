@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, type RefObject } from 'react'
 import {
   Line,
   LineChart,
@@ -24,7 +24,6 @@ const AXIS_TITLE = { fontSize: 12, fill: 'var(--color-muted)', fontFamily: 'var(
 /** The blowoff branch of Eq. 6.1 at zero stretch: the report's conservative space limit. */
 const BLOWOFF_AT_ZERO_PCT = blowoffBranch(0)
 /** Where the labels that sit on the two straight lines start, cm/s. */
-const LABEL_FROM_CM_S = 0.62
 
 /** Eq. 6.1 as O2 limit against flow for one rod, on evenly spaced log steps of flow. */
 function limitCurve(rodMm: RodMm) {
@@ -44,6 +43,8 @@ function limitCurve(rodMm: RodMm) {
 export function Eq61Inset() {
   const rodMm = useTwin((state) => state.rodMm)
   const data = useMemo(() => limitCurve(rodMm), [rodMm])
+  // The 13.4% label: the dot hides its "now" when it lands on it (after a drain at high airflow).
+  const blowoffLabel = useRef<HTMLParagraphElement>(null)
   return (
     <Panel label="Orbit limit against airflow" className="h-44 w-[31rem] shrink-0">
       <LineChart
@@ -97,25 +98,27 @@ export function Eq61Inset() {
           activeDot={false}
           isAnimationActive={false}
         />
-        <LineLabels curveStartPct={data[0].limit} />
-        <NowDot />
+        <LineLabels curveStartPct={data[0].limit} blowoffLabel={blowoffLabel} />
+        <NowDot blowoffLabel={blowoffLabel} />
       </LineChart>
     </Panel>
   )
 }
 
 /** The three line labels, written on the plot beside the lines they name, each with its footnote. */
-function LineLabels({ curveStartPct }: { curveStartPct: number }) {
-  const xScale = useXAxisScale()
+function LineLabels({
+  curveStartPct,
+  blowoffLabel,
+}: {
+  curveStartPct: number
+  blowoffLabel: RefObject<HTMLParagraphElement | null>
+}) {
   const yScale = useYAxisScale()
   const plot = usePlotArea()
-  const left = xScale?.(LABEL_FROM_CM_S)
   const earthY = yScale?.(EARTH_LIMIT_O2_PCT)
   const blowoffY = yScale?.(BLOWOFF_AT_ZERO_PCT)
   const curveY = yScale?.(curveStartPct)
-  if (!plot || left === undefined || earthY === undefined || blowoffY === undefined || curveY === undefined) {
-    return null
-  }
+  if (!plot || earthY === undefined || blowoffY === undefined || curveY === undefined) return null
   const fromBottom = (y: number) => plot.y + plot.height - y
   return (
     <foreignObject x={plot.x} y={plot.y} width={plot.width} height={plot.height}>
@@ -130,9 +133,10 @@ function LineLabels({ curveStartPct }: { curveStartPct: number }) {
           Earth limit <span className="num">{EARTH_LIMIT_O2_PCT.toFixed(1)}%</span>{' '}
           <Cite id="bass2.flam.vs-1g" />
         </p>
-        <p className="absolute" style={{ left: left - plot.x, top: blowoffY - plot.y + 1 }}>
-          <span className="num">{BLOWOFF_AT_ZERO_PCT.toFixed(1)}%</span>, blowoff branch at zero stretch,
-          model
+        {/* Under its line at the right, where the curve is well above it and clear of the dot at the
+            drain's end (13% at 2 cm/s), the demo's last frame. */}
+        <p ref={blowoffLabel} className="absolute right-1.5" style={{ top: blowoffY - plot.y + 1 }}>
+          <span className="num">{BLOWOFF_AT_ZERO_PCT.toFixed(1)}%</span>, zero-stretch limit, model
           <Cite id="bass2.flam.derate" />
         </p>
       </div>
@@ -140,11 +144,19 @@ function LineLabels({ curveStartPct }: { curveStartPct: number }) {
   )
 }
 
-/** The dot at the current oxygen and airflow. It moves by an SVG attribute, never by a re-render. */
-function NowDot() {
+/** How far the "now" text reaches right of the dot's centre, px. */
+const NOW_TEXT_REACH = 40
+
+/**
+ * The dot at the current oxygen and airflow. It moves by an SVG attribute, never by a re-render.
+ * Its "now" hides while the dot sits on the 13.4% label, so the two never print over each other.
+ */
+function NowDot({ blowoffLabel }: { blowoffLabel: RefObject<HTMLParagraphElement | null> }) {
   const xScale = useXAxisScale()
   const yScale = useYAxisScale()
+  const plot = usePlotArea()
   const ref = useRef<SVGGElement>(null)
+  const textRef = useRef<SVGTextElement>(null)
   useTwinFrame((frame) => {
     const x = xScale?.(frame.flowCmS)
     const y = yScale?.(frame.o2Pct)
@@ -153,13 +165,23 @@ function NowDot() {
     if (ref.current.getAttribute('transform') !== transform) {
       ref.current.setAttribute('transform', transform)
     }
+    const label = blowoffLabel.current
+    const lineY = yScale?.(BLOWOFF_AT_ZERO_PCT)
+    if (!label || !plot || lineY === undefined || !textRef.current) return
+    // The label in chart coordinates: right-aligned in the plot, just under its line.
+    const right = plot.x + plot.width - 6
+    const left = right - label.offsetWidth
+    const top = lineY + 1
+    const onLabel = x + NOW_TEXT_REACH > left - 4 && x - 8 < right && y + 8 > top && y - 8 < top + label.offsetHeight
+    const visibility = onLabel ? 'hidden' : 'visible'
+    if (textRef.current.getAttribute('visibility') !== visibility) textRef.current.setAttribute('visibility', visibility)
   })
   return (
     // Off the plot until the first frame places it.
     <g ref={ref} pointerEvents="none" transform="translate(-99 -99)">
       <circle r={7} fill="none" stroke="var(--color-cyan)" strokeOpacity={0.4} />
       <circle r={3} fill="var(--color-cyan)" />
-      <text x={11} y={4} fontSize={12} fill="var(--color-ink)" fontFamily="var(--font-sans)">
+      <text ref={textRef} x={11} y={4} fontSize={12} fill="var(--color-ink)" fontFamily="var(--font-sans)">
         now
       </text>
     </g>
