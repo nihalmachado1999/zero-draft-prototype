@@ -18,7 +18,8 @@ import { scriptDeps } from './labDeps'
 
 const OUT = join(fileURLToPath(new URL('../../', import.meta.url)), 'src', 'data', 'labPartnerCache.json')
 const ATTEMPTS = 3
-const SPACING_MS = 15_000
+/** Pause between questions. A token-per-minute limit (Groq's free tier) needs about 65 s. */
+const SPACING_MS = Number(process.env.LAB_CACHE_SPACING_MS) || 15_000
 
 interface Answer {
   id: string

@@ -81,7 +81,7 @@ describe('answerQuestion with a mocked LLM', () => {
       type: 'done',
       refused: false,
       model: 'mock-model',
-      promptVersion: 'lab-partner-tools@1+lab-partner-answer@3',
+      promptVersion: 'lab-partner-tools@1+lab-partner-answer@4',
     })
   })
 
@@ -127,6 +127,8 @@ describe('answerQuestion with a mocked LLM', () => {
     expect(requests[1].tools).toBeUndefined()
     expect(requests[1].user).toContain('tool#1.coPeakPpm = 986.7')
     expect(requests[1].user).toMatch(/\[c\d{4}\] BASS-II report, p\. \d+/)
+    // The tool step sees the question, not the excerpts: they only matter for the answer.
+    expect(requests[0].user).toBe('Question: What happened in Test M5?')
   })
 
   it('never runs more than 3 tools, and never a tool that doesn’t exist', async () => {
@@ -146,6 +148,7 @@ describe('answerQuestion with a mocked LLM', () => {
     expect(events.at(-1)).toEqual({ type: 'error', message: llmErrorMessage(new Error('429')) })
     expect(llmErrorMessage(new Error('429'))).toContain('usage limit')
     expect(llmErrorMessage(new Error('503 UNAVAILABLE'))).toContain('overloaded')
+    expect(llmErrorMessage(new Error('429 from Groq: Rate limit reached on tokens per minute (TPM)'))).toContain('this minute')
   })
 
   it('tells the diagnostics hook about each raw reply', async () => {
@@ -174,7 +177,7 @@ describe('parseAnswer', () => {
 describe('parsePrompt', () => {
   it('reads the version line of both prompts', () => {
     expect(prompts.tools.version).toBe('lab-partner-tools@1')
-    expect(prompts.answer.version).toBe('lab-partner-answer@3')
+    expect(prompts.answer.version).toBe('lab-partner-answer@4')
     expect(prompts.answer.body.startsWith('# Your job')).toBe(true)
   })
 

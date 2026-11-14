@@ -24,6 +24,8 @@ Written Mon 9 Nov 2026. Event: Sat 14 to Sun 15 Nov 2026. Read `CLAUDE.md` first
 - LLM: Gemini through `@google/genai` (§7.3). A Claude Pro plan doesn't include API access.
 - The challenge's Resources tab is empty until 13 Nov. Check it then, and add any new NASA datasets to §8.5.
 
+**Changed on 14 Nov, after M6:** the LLM is now Groq (`openai/gpt-oss-120b`) whenever `GROQ_API_KEY` is set; Gemini remains the fallback. Groq's free tier allows 1,000 requests a day but 8,000 tokens a minute, and one question uses about 6,000, so expect about one live question a minute. A paid Groq tier lifts that. The tool step no longer gets the excerpts (only the answer step needs them), which saves about 1,500 tokens a question. gpt-oss reasons before it writes and its reasoning counts against the token cap, so on Groq's reasoning models the cap is the answer's 400 plus 1,024 for reasoning: at 400 alone, Groq refused the answer as cut off. The answer stays short through the prompt (2 to 4 sentences) and the schema (at most 4).
+
 **Found on 14 Nov (M6):**
 - The Gemini key is on the free tier: **20 requests a day per model**, and a Lab Partner question takes 2. That is about 10 live questions a day for everyone, judges included. Enable billing on the key's Google AI Studio project before deploying, or live questions will mostly show "Gemini's usage limit for this key is used up for now".
 - The suggested questions' cached answers were generated with `gemini-3.5-flash-lite`, because the `gemini-3.5-flash` quota was spent and the newer Flash models were overloaded. Five of six were kept after review; the lunar one asks live. Regenerate with Flash (`npm run lab:cache`), read every answer against its sources, then commit.
@@ -854,8 +856,10 @@ all source text -- chunks.ts --> api/_data/chunks.json                          
 
 **Human review:** read `review.md`, spot-check 3 fields per investigation against the PDFs, and record who checked and when in `REVIEWED.md`.
 
-### 7.3 Provider: Gemini
+### 7.3 Provider: Groq, with Gemini as the fallback
 
+- Groq when `GROQ_API_KEY` is set: `GROQ_API_KEY` and `GROQ_MODEL` (`openai/gpt-oss-120b`), through Groq's OpenAI-style chat completions API with plain `fetch` (no SDK). Function calling for the tools, `json_schema` output for answers, `reasoning_effort: low`.
+- Otherwise Gemini, as below.
 - SDK: `@google/genai` (3.0 at the time of writing; needs Node 22 or newer).
 - One module, `pipeline/scripts/llm.ts`, used by the scripts and `api/`, exports `complete({ system, user, tools?, json })`. Nothing else imports the SDK.
 - Env vars: `GEMINI_API_KEY` and `GEMINI_MODEL`, in `.env.local` locally and in Vercel environment variables when deployed. Don't hardcode a model name. Pick the current model in Google AI Studio that supports function calling and JSON output, and record it.

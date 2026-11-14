@@ -1,5 +1,6 @@
 // npm run llm:smoke
-// Sends "say ok" to Gemini with the key and model from .env.local, and prints "ok" if it answers.
+// Sends "say ok" to the LLM (Groq or Gemini, see llm.ts) with the key and model from .env.local,
+// and prints "ok" if it answers.
 import { complete, loadLocalEnv } from './llm'
 
 loadLocalEnv()
@@ -17,10 +18,10 @@ try {
   if (/^ok\b/i.test(reply)) {
     console.log('ok')
   } else {
-    console.log('Gemini answered, but not with "ok".')
+    console.log('The LLM answered, but not with "ok".')
     process.exitCode = 1
   }
 } catch (error) {
-  console.log(`Gemini call failed: ${error instanceof Error ? error.message : String(error)}`)
+  console.log(`LLM call failed: ${error instanceof Error ? error.message : String(error)}`)
   process.exitCode = 1
 }

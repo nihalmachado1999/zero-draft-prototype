@@ -16,8 +16,8 @@ const started = Date.now()
 const verbose = process.env.LAB_VERBOSE === '1'
 const deps = {
   ...scriptDeps(),
-  onReply: (step: string, reply: { text: string; finishReason?: string; usage?: { output: number; thinking: number } }) => {
-    const tokens = reply.usage ? `${reply.usage.output} tokens, ${reply.usage.thinking} thinking` : 'no usage'
+  onReply: (step: string, reply: { text: string; finishReason?: string; usage?: { input?: number; output: number; thinking: number } }) => {
+    const tokens = reply.usage ? `${reply.usage.input ?? '?'} in, ${reply.usage.output} out, ${reply.usage.thinking} thinking` : 'no usage'
     console.log(`        [${step}: ${reply.finishReason ?? '?'}, ${tokens}]`)
     if (verbose && reply.text) console.log(reply.text)
   },

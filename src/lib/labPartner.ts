@@ -31,7 +31,7 @@ export interface LlmReply {
   functionCalls: RawCall[]
   model: string
   finishReason?: string
-  usage?: { output: number; thinking: number }
+  usage?: { input?: number; output: number; thinking: number }
 }
 export type Complete = (request: LlmRequest) => Promise<LlmReply>
 
@@ -154,7 +154,9 @@ export async function* answerQuestion(
     yield { type: 'status', stage: 'choosing-tools' }
     const choice = await deps.complete({
       system: `${deps.prompts.tools.body}\n\n# The screen now\n\n${screen(context)}`,
-      user: `Question: ${question}\n\nExcerpts:\n\n${excerpts(chunks)}`,
+      // No excerpts here: choosing tools needs only the question, and it saves ~1,500 tokens a
+      // question against a free tier's tokens-per-minute limit. The answer step gets them all.
+      user: `Question: ${question}`,
       tools: TOOL_DECLARATIONS,
       thinkingLevel: 'MINIMAL',
       timeoutMs: 30_000,
@@ -194,13 +196,16 @@ export async function* answerQuestion(
 /** What went wrong with the LLM, in words a person can act on. Never the raw error. */
 export function llmErrorMessage(error: unknown): string {
   const text = error instanceof Error ? error.message : String(error)
+  if (/\b413\b|per minute|\bTPM\b|\bRPM\b/i.test(text)) {
+    return 'Lab Partner’s language model is at its limit for this minute. Ask again in a minute; the suggested questions still work.'
+  }
   if (/\b429\b|RESOURCE_EXHAUSTED|quota/i.test(text)) {
-    return 'Gemini’s usage limit for this key is used up for now. The suggested questions still work: their answers are cached.'
+    return 'The language model’s usage limit for this key is used up for now. The suggested questions still work: their answers are cached.'
   }
   if (/\b503\b|UNAVAILABLE|high demand|overloaded/i.test(text)) {
-    return 'Gemini is overloaded right now. Try again in a moment; the suggested questions still work.'
+    return 'The language model is overloaded right now. Try again in a moment; the suggested questions still work.'
   }
-  if (/timed? ?out|abort/i.test(text)) return 'Gemini took too long to answer. Try again in a moment.'
-  if (/GEMINI_API_KEY|GEMINI_MODEL|API key/i.test(text)) return 'Lab Partner has no Gemini key or model set on this server.'
-  return 'Lab Partner couldn’t get an answer from Gemini. Try again in a moment.'
+  if (/timed? ?out|abort/i.test(text)) return 'The language model took too long to answer. Try again in a moment.'
+  if (/(GEMINI|GROQ)_(API_KEY|MODEL)|API key/i.test(text)) return 'Lab Partner has no language model key or model set on this server.'
+  return 'Lab Partner couldn’t get an answer from its language model. Try again in a moment.'
 }

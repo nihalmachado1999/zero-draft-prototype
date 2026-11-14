@@ -22,7 +22,7 @@ The full plan is `docs/SPEC.md`. Before writing code for a milestone, read that 
 - Fonts: `@fontsource-variable/archivo` for our words, `@fontsource-variable/source-serif-4` for NASA's quoted words, `@fontsource-variable/jetbrains-mono` for numbers
 - Vitest for tests, tsx to run scripts, unpdf to read PDF text
 - Deploy on Vercel: static site plus serverless functions in `api/`
-- Gemini through `@google/genai` (SPEC §7.3). Only `pipeline/scripts/llm.ts` imports it; `api/` uses that module. Keys and the model name come from `GEMINI_API_KEY` and `GEMINI_MODEL`.
+- The LLM is Groq (`GROQ_API_KEY`, `GROQ_MODEL`, e.g. `openai/gpt-oss-120b`), called with plain `fetch`, whenever `GROQ_API_KEY` is set; otherwise Gemini through `@google/genai` (`GEMINI_API_KEY`, `GEMINI_MODEL`). Only `pipeline/scripts/llm.ts` talks to either (SPEC §7.3); `api/` uses that module.
 - Node 22 or newer.
 
 ## Commands
@@ -31,7 +31,7 @@ The full plan is `docs/SPEC.md`. Before writing code for a milestone, read that 
 - `npm test`: unit tests (`vitest run`)
 - `npm run build`: must pass before a milestone is done. It also runs `npm run build:api`, which bundles `api/_src/lab-partner.ts` into `api/lab-partner.js`
 - `npm run check:claims`: confirms every quote in `src/data/claims.json` is on its stated PDF page, or its stated line of a PSI file
-- `npm run llm:smoke`: sends "say ok" to Gemini with the key and model in `.env.local`; prints ok
+- `npm run llm:smoke`: sends "say ok" to the LLM with the key and model in `.env.local`; prints ok
 - `npm run lab:ask -- "question"`: asks Lab Partner one question from the terminal and prints every tool, checked sentence and dropped sentence. `LAB_VERBOSE=1` also prints Gemini's raw replies
 - `npm run lab:cache` (or `-- m5 lunar` for some): regenerates the suggested questions' cached answers in `src/data/labPartnerCache.json`. Read every answer against its sources before committing
 - `npm run data:bass2`: rebuilds `public/data/bass2.json` and `audit.json` from the raw CSV
