@@ -26,11 +26,11 @@ const claim = (id: string) => {
 const quoteOf = (id: string) => normalize(claim(id).quote ?? '')
 
 describe('claims.json', () => {
-  it('holds the 82 report claims, the 36 PSI claims, the Zayac poster claim and the 12 computed claims, each id once', () => {
-    expect(CLAIMS).toHaveLength(131)
-    expect(new Set(CLAIMS.map((c) => c.id)).size).toBe(131)
-    expect(CLAIMS.filter((c) => c.sourceId === 'nasa-tm-20210011385')).toHaveLength(82)
-    expect(CLAIMS.filter((c) => typeof c.locator?.pdfPage === 'number')).toHaveLength(83)
+  it('holds the 83 report claims, the 36 PSI claims, the Zayac poster claim and the 12 computed claims, each id once', () => {
+    expect(CLAIMS).toHaveLength(132)
+    expect(new Set(CLAIMS.map((c) => c.id)).size).toBe(132)
+    expect(CLAIMS.filter((c) => c.sourceId === 'nasa-tm-20210011385')).toHaveLength(83)
+    expect(CLAIMS.filter((c) => typeof c.locator?.pdfPage === 'number')).toHaveLength(84)
     expect(CLAIMS.filter((c) => typeof c.locator?.file === 'string')).toHaveLength(36)
     expect(CLAIMS.filter((c) => c.kind === 'computed')).toHaveLength(12)
   })

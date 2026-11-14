@@ -1,15 +1,17 @@
-import { useMemo, type ReactNode } from 'react'
+import { useMemo } from 'react'
 import { Note } from '../components/Note'
 import type { FingerprintNotes } from '../components/rank/Fingerprint'
 import { FlammabilityMap } from '../components/rank/FlammabilityMap'
 import { IgnitionRace } from '../components/rank/IgnitionRace'
 import { Leaderboard } from '../components/rank/Leaderboard'
 import { NotRanked } from '../components/rank/NotRanked'
+import type { SliderNotes } from '../components/rank/WeightSliders'
 import type { Bass2Row } from '../lib/audit'
 import { useAuditData } from '../lib/bass2Data'
 import { rodRug } from '../lib/rankCharts'
 import { useWeights } from '../lib/rankStore'
 import {
+  burnCountRange,
   familyFlows,
   leaderboard,
   lowestInitialO2,
@@ -41,11 +43,11 @@ function RankStage({ rows }: { rows: Bass2Row[] }) {
   const groups = useMemo(() => unrankedGroups(entities, rows), [entities, rows])
   const rug = useMemo(() => rodRug(rows), [rows])
   const notes = useMemo(() => fingerprintNotes(entities), [entities])
-  const lowO2Note = useMemo(() => testedNote(rows), [rows])
+  const sliderNotes = useMemo(() => ({ lowO2: lowO2Note(rows, entities), coYield: notes.coYield }), [rows, entities, notes])
 
   return (
     <div className="@container/rank flex flex-col gap-16 px-6 pt-6 pb-16">
-      <RiskIndex entities={entities} groups={groups} notes={notes} lowO2Note={lowO2Note} />
+      <RiskIndex entities={entities} groups={groups} notes={notes} sliderNotes={sliderNotes} />
       <div className="grid gap-16 @min-[1100px]/rank:grid-cols-2 @min-[1100px]/rank:gap-12">
         <FlammabilityMap rug={rug} />
         <IgnitionRace />
@@ -62,18 +64,18 @@ function RiskIndex({
   entities,
   groups,
   notes,
-  lowO2Note,
+  sliderNotes,
 }: {
   entities: RiskEntity[]
   groups: UnrankedGroup[]
   notes: FingerprintNotes
-  lowO2Note: ReactNode | null
+  sliderNotes: SliderNotes
 }) {
   const weights = useWeights()
   const board = useMemo(() => leaderboard(entities, weights), [entities, weights])
   return (
     <div className="grid gap-12 @min-[1000px]/rank:grid-cols-[minmax(0,1fr)_19rem]">
-      <Leaderboard board={board} weights={weights} notes={notes} lowO2Note={lowO2Note} />
+      <Leaderboard board={board} weights={weights} notes={notes} sliderNotes={sliderNotes} />
       <NotRanked groups={groups} unscored={board.unscored} />
     </div>
   )
@@ -81,28 +83,31 @@ function RiskIndex({
 
 /**
  * Under the low-O2 slider: what was tested bounds what could be seen burning. From bass2.json:
- * the lowest starting O2 of any usable slab test, and of any usable rod test.
+ * the lowest starting O2 of any usable slab and rod test, and how many burn-confirmed tests each
+ * ranked type had (a lowest value can only drop as tests are added).
  */
-function testedNote(rows: Bass2Row[]): ReactNode | null {
+function lowO2Note(rows: Bass2Row[], entities: RiskEntity[]): string | null {
   const slab = lowestInitialO2(rows, 'slab')
   const rod = lowestInitialO2(rows, 'rod')
-  if (slab === null || rod === null) return null
+  const slabN = burnCountRange(entities, 'slab')
+  const rodN = burnCountRange(entities, 'rod')
+  if (slab === null || rod === null || !slabN || !rodN) return null
+  const range = ({ min, max }: { min: number; max: number }) => (min === max ? `${min}` : `${min} to ${max}`)
   return (
-    <>
-      Also reflects what was tested: slab tests never started below {slab.toFixed(1)}% O2; rod tests started as low as{' '}
-      {rod.toFixed(1)}%.
-    </>
+    `Also reflects what was tested: slab tests never started below ${slab.toFixed(1)}% O2; rod tests started as ` +
+    `low as ${rod.toFixed(1)}%. And how often: rods had ${range(rodN)} burn-confirmed tests each, slabs ` +
+    `${range(slabN)}, and a lowest value only drops as tests are added.`
   )
 }
 
-/** The sentence the CO-yield hover adds, only if the data bears it out. */
+/** The sentence the CO-yield hover and slider add, only if the data bears it out. */
 function fingerprintNotes(entities: RiskEntity[]): FingerprintNotes {
   const slabFlows = familyFlows(entities, 'slab')
   const rodFlows = familyFlows(entities, 'rod')
   return {
     coYield:
       slabFlows.length === 1 && slabFlows[0] === 'Opposed' && rodFlows.length > 1
-        ? 'Slabs were only tested in opposed flow; rods mix flow directions.'
+        ? 'Also reflects flow direction: slabs were only tested in opposed flow; rods mix flow directions.'
         : null,
   }
 }

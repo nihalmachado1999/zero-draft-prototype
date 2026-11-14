@@ -162,6 +162,22 @@
     "verified": true
   },
   {
+    "id": "bass2.ign.ts-factor",
+    "topic": "ignition",
+    "text": "The 0.7 in t_s = 0.7 r^2 / alpha_s is an empirical factor, chosen so that tau = 1 at the ignition limit",
+    "value": 0.7,
+    "kind": "quoted",
+    "sourceId": "nasa-tm-20210011385",
+    "quote": "the empirical factor 0.7 is selected so that τ = 1 at the ignition limit",
+    "emphasis": "the empirical factor 0.7",
+    "locator": {
+      "pdfPage": 76,
+      "reportPage": 68,
+      "spansNextPage": false
+    },
+    "verified": true
+  },
+  {
     "id": "bass2.ign.ts-def",
     "topic": "ignition",
     "text": "Ignition delay normalized by the solid-phase response time ts = 0.7 r^2 / alpha_s",
@@ -1748,7 +1764,7 @@
     "unit": "s",
     "kind": "computed",
     "formula": "t_s = 0.7 r^2 / alpha_s, with r the rod radius and alpha_s = 1.2e-3 cm^2/s",
-    "inputs": ["bass2.ign.ts-def", "bass2.ign.alpha-pmma"],
+    "inputs": ["bass2.ign.ts-def", "bass2.ign.alpha-pmma", "bass2.ign.ts-factor"],
     "verified": true
   },
   {

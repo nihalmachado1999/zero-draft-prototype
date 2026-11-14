@@ -316,16 +316,31 @@ export function biggestFactor(scores: Scores, weights: Weights): IndexKey | null
   return best
 }
 
-/** The headline above the leaderboard: who tops the index at these weights, and why. */
-export function leaderHeadline(
-  board: Leaderboard,
-  weights: Weights,
-): { entity: RiskEntity; factor: IndexKey; measured: Measured } | null {
-  const leader = board.rows[0]
+/** An index as the leaderboard shows it, to 0.1. */
+const shown = (index: number) => Math.round(index * 10) / 10
+
+export interface Headline {
+  entity: RiskEntity
+  factor: IndexKey
+  measured: Measured
+  /** The second row, or null when only one type is scored. */
+  runnerUp: RiskEntity | null
+  /**
+   * How far ahead the leader is, worked out from the two indexes as shown (to 0.1), so the
+   * headline matches the screen: 63.5 and 63.3 give 0.2. 0 means they show the same index.
+   */
+  margin: number | null
+}
+
+/** The headline above the leaderboard: who tops the index at these weights, by how much, and why. */
+export function leaderHeadline(board: Leaderboard, weights: Weights): Headline | null {
+  const [leader, second] = board.rows
   if (!leader) return null
   const factor = biggestFactor(leader.scores, weights)
   const measured = factor ? leader.entity.components[factor] : undefined
-  return factor && measured ? { entity: leader.entity, factor, measured } : null
+  if (!factor || !measured) return null
+  const margin = second ? Math.round((shown(leader.index) - shown(second.index)) * 10) / 10 : null
+  return { entity: leader.entity, factor, measured, runnerUp: second?.entity ?? null, margin }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -404,6 +419,15 @@ export function lowestInitialO2(rows: readonly Bass2Row[], family: SampleFamily)
     .filter((row) => row.o2Usable && row.o2InitPct !== null && sampleFamily(row.sampleType) === family)
     .map((row) => row.o2InitPct as number)
   return values.length ? Math.min(...values) : null
+}
+
+/**
+ * The fewest and most burn-confirmed tests among a family's ranked types. Low-O2 burning is a
+ * lowest value, and a lowest value can only drop as tests are added, so this belongs beside it.
+ */
+export function burnCountRange(entities: readonly RiskEntity[], family: SampleFamily): { min: number; max: number } | null {
+  const counts = entities.filter((e) => e.ranked && e.family === family).map((e) => e.burnConfirmed)
+  return counts.length ? { min: Math.min(...counts), max: Math.max(...counts) } : null
 }
 
 /** The flow directions the ranked types of a family were tested in. */

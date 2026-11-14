@@ -6,6 +6,7 @@ import { compileBass2, type Bass2Row, type FlowByTest, type SampleType } from '.
 import { solidResponseTimeS } from './physics'
 import {
   biggestFactor,
+  burnCountRange,
   componentScores,
   componentShares,
   EQUAL_WEIGHTS,
@@ -328,6 +329,24 @@ describe('segment shares and the headline', () => {
     expect([co?.entity.id, co?.factor, co?.measured.value]).toEqual(['pmma-slab-2', 'coYield', 400.8])
   })
 
+  it('says how far ahead the leader is, from the indexes as shown', () => {
+    // 63.5 and 63.3 on screen: a 0.2-point lead, not a finding.
+    const equal = leaderHeadline(leaderboard(entities, EQUAL_WEIGHTS), EQUAL_WEIGHTS)
+    expect([equal?.runnerUp?.id, equal?.margin]).toEqual(['pmma-rod-12.7', 0.2])
+    // Low-O2 alone: rod 9.525 mm scores 1 (100), rod 12.7 mm (18.4 − 14.2)/4.8 = 0.875 (87.5).
+    const lowO2 = leaderHeadline(leaderboard(entities, only('lowO2')), only('lowO2'))
+    expect([lowO2?.runnerUp?.id, lowO2?.margin]).toEqual(['pmma-rod-12.7', 12.5])
+  })
+
+  it('gives a margin of 0 when the top two show the same index, and none with one row', () => {
+    // Slabs 4 mm and 5 mm both bottomed out at 17.4%: on their own, no spread, both 0.
+    const pair = entities.filter((e) => e.id === 'pmma-slab-4' || e.id === 'pmma-slab-5')
+    const tied = leaderHeadline(leaderboard(pair, only('lowO2')), only('lowO2'))
+    expect([tied?.entity.id, tied?.runnerUp?.id, tied?.margin]).toEqual(['pmma-slab-4', 'pmma-slab-5', 0])
+    const alone = leaderHeadline(leaderboard([entity('pmma-slab-2')], EQUAL_WEIGHTS), EQUAL_WEIGHTS)
+    expect([alone?.runnerUp, alone?.margin]).toEqual([null, null])
+  })
+
   it('breaks a tie for biggest factor in component order', () => {
     expect(biggestFactor({ lowO2: 0.5, coYield: 0.5 }, EQUAL_WEIGHTS)).toBe('lowO2')
     expect(biggestFactor({ lowO2: 0.5 }, only('coYield'))).toBeNull()
@@ -388,6 +407,13 @@ describe('the sentences shown with the components', () => {
     // Not 16.8%: that is the lowest final O2 a slab reached, not the lowest it started at.
     expect(lowestInitialO2(rows, 'slab')).toBe(17.9)
     expect(lowestInitialO2(rows, 'rod')).toBe(13.6)
+  })
+
+  it('rods had 8 to 25 burn-confirmed tests each, slabs 3 to 4', () => {
+    // A lowest value can only drop as tests are added, so the low-O2 slider says this too.
+    expect(burnCountRange(entities, 'rod')).toEqual({ min: 8, max: 25 })
+    expect(burnCountRange(entities, 'slab')).toEqual({ min: 3, max: 4 })
+    expect(burnCountRange(entities, 'sibal')).toBeNull()
   })
 
   it('slabs were only tested in opposed flow; rods mix flow directions', () => {

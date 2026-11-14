@@ -24,12 +24,15 @@ const HINTS: Record<IndexKey, ReactNode> = {
  * interaction 13). At least one weight always stays above 0 (risk.setWeight), so the last one
  * up stops at its first step. Each label has a swatch in its segment's color.
  */
-export function WeightSliders({ weights, lowO2Note }: { weights: Weights; lowO2Note: ReactNode | null }) {
+/** What each component also reflects besides the sample type, worked out from the data by the view. */
+export type SliderNotes = Partial<Record<IndexKey, ReactNode | null>>
+
+export function WeightSliders({ weights, notes }: { weights: Weights; notes: SliderNotes }) {
   return (
     <div className="flex items-start gap-8">
       <div className="grid flex-1 grid-cols-2 gap-8">
         {INDEX_KEYS.map((key) => (
-          <WeightSlider key={key} component={key} weight={weights[key]} note={key === 'lowO2' ? lowO2Note : null} />
+          <WeightSlider key={key} component={key} weight={weights[key]} note={notes[key] ?? null} />
         ))}
       </div>
       <button

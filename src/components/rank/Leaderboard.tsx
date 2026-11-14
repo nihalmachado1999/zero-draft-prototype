@@ -1,12 +1,12 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { useCallback, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useCallback, useRef, useState, type KeyboardEvent } from 'react'
 import type { Leaderboard as Board } from '../../lib/risk'
 import { INDEX_KEYS, type Weights } from '../../lib/risk'
 import { Cite } from '../Cite'
 import { Fingerprint, SLOT_ROOM, type FingerprintCell, type FingerprintNotes } from './Fingerprint'
 import { useReorder } from './reorder'
 import { RiskHeadline } from './RiskHeadline'
-import { WeightSliders } from './WeightSliders'
+import { WeightSliders, type SliderNotes } from './WeightSliders'
 
 /** Every row is this tall, so the still rank numerals line up with the rows sliding past them. */
 const ROW_H = 'h-13'
@@ -17,8 +17,8 @@ type LeaderboardProps = {
   board: Board
   weights: Weights
   notes: FingerprintNotes
-  /** Shown under the low-O2 slider's caption: what was tested. */
-  lowO2Note: ReactNode | null
+  /** Shown under each slider's caption: what else the component reflects. */
+  sliderNotes: SliderNotes
 }
 
 /**
@@ -27,7 +27,7 @@ type LeaderboardProps = {
  * resize (the signature motion). Nothing else moves. Arrow keys step through the segments, up and
  * down the rows and across the components.
  */
-export function Leaderboard({ board, weights, notes, lowO2Note }: LeaderboardProps) {
+export function Leaderboard({ board, weights, notes, sliderNotes }: LeaderboardProps) {
   const { move, fade } = useReorder()
   const listRef = useRef<HTMLOListElement>(null)
   const [active, setActive] = useState<FingerprintCell>({ row: 0, col: 0 })
@@ -76,7 +76,7 @@ export function Leaderboard({ board, weights, notes, lowO2Note }: LeaderboardPro
 
       <RiskHeadline board={board} weights={weights} />
 
-      <WeightSliders weights={weights} lowO2Note={lowO2Note} />
+      <WeightSliders weights={weights} notes={sliderNotes} />
 
       {/* The shared scale every bar is drawn on. */}
       <div aria-hidden="true" className={`${ROW_GRID} -mb-2 pl-[4.5rem] text-xs leading-4 text-muted`}>
