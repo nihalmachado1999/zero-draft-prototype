@@ -85,6 +85,17 @@ function supportValues(values: readonly (number | string | boolean)[]): number[]
 const ORDER = /\b(?:you|crews?|astronauts?|operators?)\s+(?:should|must|need to|have to|ought to)\b/i
 const IMPERATIVE = /^(?:always|never|make sure|ensure|do not|don't|keep|stop)\b/i
 
+/**
+ * A parenthesis holding nothing but citation objects, which some models copy into the sentence
+ * itself: ({"tool": "tool#1.x"}, {"chunkId": "c1", "quote": "…"}). The sentence's support list
+ * already carries them, so they are removed before the checks; any other braces still fail.
+ */
+const INLINE_CITATIONS = /\s*\((?:\s*\{[^{}()]*\}\s*,?)+\s*\)/g
+
+export function stripInlineCitations(text: string): string {
+  return text.replace(INLINE_CITATIONS, '')
+}
+
 /** The BASS-II report, and the BASS-II dataset its numbers come from. */
 const REPORT = 'nasa-tm-20210011385'
 const BASS2_SOURCES = new Set([REPORT, 'psi-25'])
@@ -113,7 +124,7 @@ export function checkAnswer({ answer, chunks, tools, shortName }: CheckInput): C
 
   const raw = answer.refusal ? [] : (answer.sentences ?? []).slice(0, MAX_SENTENCES)
   for (const item of raw) {
-    const text = normalize(item.text ?? '')
+    const text = normalize(stripInlineCitations(item.text ?? ''))
     if (!text) continue
     const result = checkSentence(text, item.support ?? [], chunkById, toolById, shortName)
     if ('reason' in result) dropped.push({ text, reason: result.reason })

@@ -90,10 +90,24 @@ Criteria are from the 2024 Judging & Awards Guide. The 2026 guide comes out 13 N
 
 ## 3. The 30-second video (build the app backwards from this)
 
-Screen recording at 1440×900, captions burned in, no voice.
+Rewritten on 14 Nov. Screen recording at 1440×900, captions burned in, no voice. Most judges see only this, so it shows the one thing other teams won't have: a number you click opens NASA's own words, checked by script. Rank is left out: the risk index is our weakest science and its beat crammed three actions into 5 seconds.
 
 | Time | Screen | Action | Caption |
 |---|---|---|---|
+| 0–8 s | Overview (Burn Twin), dock closed | Press "Drain oxygen". The Earth flame goes out at 15.4%; the orbit flame turns blue, pulses, and goes out at 13.61%. "Kept burning 1.79 points of oxygen longer" appears. | "A PMMA rod in 1g goes out at 15.4% oxygen. In a gentle orbit airflow, NASA's model keeps it burning to 13.61%." |
+| 8–13 s | Same, the header | Click footnote ¹ on the thesis line, "Earth fire tests miss how materials burn in orbit." The drawer slides in; the underline draws under "based on 1-g behavior without consideration of low gravity effects"; "Quote checked" in green. | "Every claim opens NASA's own words, checked by script against the source." |
+| 13–19 s | Audit bar to Summarize | Close the drawer (Esc). Click "Quarantined 7" in the audit bar. The tiles fly into the quarantine bay; P22b's math opens: 19.1 + 20.0 = 39.1. | "We audited all 129 ISS tests in NASA's raw data. 7 readings are impossible or missing, and we show why." |
+| 19–26 s | Lab Partner and Interpret | The dock is already open, with "Would a Test M5 fire be dangerous in a small cabin?" typed in. Press Enter: Interpret opens, the simulator runs at 600×, CO crosses 10 and then 55 ppm, and the answer arrives with its citation chips. | "Lab Partner runs the app's models and cites every sentence. A script checks each quote and number first." |
+| 26–30 s | Close card | none | "ZERO-DRAFT. Every number traced to NASA data." Then the URL. |
+
+**Recording notes:**
+- Ask the Lab Partner beat live, not from the cache: Groq answers in about 3 seconds, and a "Cached answer" label on screen reads as canned. If the live answer is slow or weak, click the same suggested question instead (cached, instant) and keep that take.
+- Before the take: Reset the Burn Twin, close the drawer, set Interpret to its first preset, and open the dock with the question typed (open the dock at the end of the Summarize beat, so the layout change happens off the important frames).
+- Drain at the default 2 cm/s and 6.35 mm rod: the last frame of the drain is the one with 13.61%, 1.79 and the "now" dot clear of every label.
+- Rehearse five times. Count the captions: about 2.5 words a second is the most a viewer reads.
+- Keep it to 30 s or less, with English subtitles, public. Re-check the 2026 Project Submission Guide first.
+
+---|---|---|---|
 | 0–9 s | Burn Twin | Press "Drain oxygen". The Earth flame dies at 15.4%. The orbit flame turns blue, pulses, and dies at 13.61%. The result banner appears. | "Same PMMA rod. On Earth it goes out at 15.4% oxygen. In orbit, NASA's data says it keeps burning to about 13.6%." |
 | 9–14 s | Audit bar to SUMMARIZE | The counters tick up; click "Quarantined"; anomalous tiles fly into the quarantine bay | "We audited all 129 ISS tests in NASA's raw data and quarantined the anomalies." (Use real counts from the CSV.) |
 | 14–19 s | RANK | Ignition race plays; one weight slider moves; the leaderboard reorders | "NASA's Earth test gives the igniter about 25 s. In orbit, ignitions took up to 230 s." |

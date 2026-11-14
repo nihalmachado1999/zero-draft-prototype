@@ -211,6 +211,12 @@ describe('checkAnswer', () => {
     ])
   })
 
+  it('removes citations a model copied into the sentence, then checks it as usual', () => {
+    const copied = `The report suggests ${SUPPRESS} ({"chunkId": "c0220", "quote": "${SUPPRESS}"}, {"tool": "tool#1.coPeakPpm"}).`
+    const out = check({ sentences: [{ text: copied, support: [{ chunkId: 'c0220', quote: SUPPRESS }] }] })
+    expect(out.sentences.map((s) => s.text)).toEqual([`The report suggests ${SUPPRESS}.`])
+  })
+
   it('drops garbled text, such as JSON braces left in a sentence', () => {
     const out = check({ sentences: [{ text: `The report suggests ${SUPPRESS}. {`, support: [{ chunkId: 'c0220', quote: SUPPRESS }] }] })
     expect(out.dropped).toEqual([{ text: `The report suggests ${SUPPRESS}. {`, reason: 'malformed' }])

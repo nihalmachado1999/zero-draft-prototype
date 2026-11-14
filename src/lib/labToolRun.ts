@@ -242,6 +242,7 @@ const PRESET_QUOTES: Partial<Record<PresetId, [string, string][]>> = {
     ['bass2Pressure', 'bass2.pressure-1atm'],
     ['flexPressure', 'psi69.pressure'],
     ['flexDroplets', 'psi69.droplets'],
+    ['zayac1g', 'zayac.burns-34'],
   ],
 }
 
@@ -255,9 +256,35 @@ function cabin(inputs: CabinInputs, preset: PresetId | null): Omit<Outcome, 'sum
   const first = run[0]
   const quotes = (preset ? (PRESET_QUOTES[preset] ?? []) : []).flatMap(([key, id]) => quote(key, id))
   if (!first.valid) {
+    const offPressure = inputs.pressureAtm !== 1
+    const atm = inputs.pressureAtm
     return {
       fields: [
-        field('prediction', 'Prediction', `none: ${first.invalidReason ?? 'outside the tested range'}`, 'cabin.model'),
+        field(
+          'prediction',
+          'What the cabin model does here',
+          `no prediction: ${first.invalidReason ?? 'outside the tested range'}. The model only works at 1 atm; ` +
+            'its refusal says nothing about whether experiments exist',
+          'cabin.model',
+        ),
+        // The Interpret view's refusal banner, as one finding the answer can cite (SPEC F4, lunar).
+        ...(offPressure
+          ? [
+              field(
+                'coverage',
+                'ZERO-DRAFT’s audit: what the indexed investigations cover at this pressure (our finding, from the quotes below)',
+                'BASS-II’s solid-material tests ran at 1 atm. FLEX’s tests were planned at 0.5 to 1.5 atm' +
+                  (atm >= 0.5 && atm <= 1.5 ? `, which includes ${round(psia(atm), 1)} psia (${round(atm, 2)} atm)` : '') +
+                  ', but it burned liquid droplets, not solids. ' +
+                  (preset === 'lunar'
+                    ? 'NASA Glenn’s 1g lab tests (Zayac 2024) do burn solids at 34% oxygen and 8.2 psi. '
+                    : '') +
+                  'Nothing ZERO-DRAFT indexed covers solids at this pressure in microgravity or lunar gravity, so it ' +
+                  'makes no prediction',
+                'bass2.pressure-1atm',
+              ),
+            ]
+          : []),
         field('o2StartPct', 'Oxygen, %', inputs.o2InitPct, preset === 'lunar' ? 'zayac.atmospheres' : undefined),
         field('pressurePsia', 'Pressure, psia', round(psia(inputs.pressureAtm), 1), preset === 'lunar' ? 'zayac.atmospheres' : undefined),
         field('modelRange', 'Where the model works', 'a sealed, well-mixed volume at 1 atm', 'cabin.model'),

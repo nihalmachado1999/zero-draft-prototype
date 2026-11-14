@@ -131,7 +131,12 @@ describe('the cabin presets (SPEC §8.2)', () => {
 
   it('refuses to predict for the 34% O2, 8.2 psia lunar lander, and says why', () => {
     const result = one('run_cabin_preset', { preset: 'lunar' })
-    expect(String(value(result, 'prediction'))).toMatch(/^none/)
+    expect(String(value(result, 'prediction'))).toMatch(/^no prediction: Pressure is not 1 atm\. .*says nothing about whether experiments exist/)
+    // The view's refusal banner, as a finding: 8.2 psia is 0.56 atm, inside FLEX's range.
+    expect(String(value(result, 'coverage'))).toContain('which includes 8.2 psia (0.56 atm), but it burned liquid droplets')
+    // NASA Glenn's 1g burns at this atmosphere exist: the gap is microgravity and lunar gravity.
+    expect(String(value(result, 'coverage'))).toContain('in microgravity or lunar gravity')
+    expect(String(value(result, 'zayac1g'))).toContain('34% oxygen at 8.2 psi')
     expect(value(result, 'pressurePsia')).toBe(8.2)
     expect(String(value(result, 'flexPressure'))).toContain('0.5')
     expect(String(value(result, 'bass2Pressure'))).toContain('1 atm')

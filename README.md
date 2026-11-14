@@ -145,5 +145,5 @@ npm run dev
 
 - **Orbital Risk Index**: low-O2 burning is shaped by how many tests each type had and how low they started, and CO yield by flow direction. Both are stated on screen.
 - **Eq. 6.1 source**: the PDF's text layer garbles the equation, so it can't be a checked quote. The drawer shows it as printed (report p. 75), and `check:claims` confirms its four coefficients are on that page in that order; a test confirms they are the ones the model uses.
-- **Cached answers**: two of the six suggested questions (the lunar habitat and the 39% readings) have no cached answer yet and ask live.
+- **Cached answers**: all six suggested questions are cached (Groq, `openai/gpt-oss-120b`), each read against its sources. The 39% answer says "the initial O2 reading was blank" where the uncalibrated initial reading was; its citation chip opens the exact Appendix A row.
 - **Narrow screens**: at 1280 px wide with the Lab Partner dock open, the Burn Twin's labels crowd. The demo size is 1440 × 900.

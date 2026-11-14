@@ -1,6 +1,6 @@
 {
  "generatedBy": "pipeline/scripts/lab-cache.ts",
- "generatedAt": "2026-11-14T11:56:45.747Z",
+ "generatedAt": "2026-11-14T12:31:24.267Z",
  "model": "openai/gpt-oss-120b",
  "promptVersion": "lab-partner-tools@1+lab-partner-answer@4",
  "answers": [
@@ -651,6 +651,266 @@
         "place": "BASS-II report, p. 52",
         "pdfPage": 60,
         "reportPage": 52
+       }
+      ]
+     }
+    },
+    {
+     "type": "done",
+     "refused": false,
+     "model": "openai/gpt-oss-120b",
+     "promptVersion": "lab-partner-tools@1+lab-partner-answer@4"
+    }
+   ]
+  },
+  {
+   "id": "lunar",
+   "question": "Does NASA have fire data for a 34% oxygen lunar habitat?",
+   "events": [
+    {
+     "type": "tool",
+     "result": {
+      "id": "tool#1",
+      "name": "run_cabin_preset",
+      "args": {
+       "preset": "lunar"
+      },
+      "view": "interpret",
+      "opensView": true,
+      "fields": [
+       {
+        "key": "prediction",
+        "label": "What the cabin model does here",
+        "value": "no prediction: Pressure is not 1 atm. The model only works at 1 atm; its refusal says nothing about whether experiments exist",
+        "claimId": "cabin.model"
+       },
+       {
+        "key": "coverage",
+        "label": "ZERO-DRAFT’s audit: what the indexed investigations cover at this pressure (our finding, from the quotes below)",
+        "value": "BASS-II’s solid-material tests ran at 1 atm. FLEX’s tests were planned at 0.5 to 1.5 atm, which includes 8.2 psia (0.56 atm), but it burned liquid droplets, not solids. NASA Glenn’s 1g lab tests (Zayac 2024) do burn solids at 34% oxygen and 8.2 psi. Nothing ZERO-DRAFT indexed covers solids at this pressure in microgravity or lunar gravity, so it makes no prediction",
+        "claimId": "bass2.pressure-1atm"
+       },
+       {
+        "key": "o2StartPct",
+        "label": "Oxygen, %",
+        "value": 34,
+        "claimId": "zayac.atmospheres"
+       },
+       {
+        "key": "pressurePsia",
+        "label": "Pressure, psia",
+        "value": 8.2,
+        "claimId": "zayac.atmospheres"
+       },
+       {
+        "key": "modelRange",
+        "label": "Where the model works",
+        "value": "a sealed, well-mixed volume at 1 atm",
+        "claimId": "cabin.model"
+       },
+       {
+        "key": "lunarAtmospheres",
+        "label": "NASA’s words, Zayac 2024, PDF p. 1",
+        "value": "specifically 21% oxygen at 14.7 psia, and 34% oxygen at 8.2 psia",
+        "claimId": "zayac.atmospheres"
+       },
+       {
+        "key": "bass2Pressure",
+        "label": "NASA’s words, BASS-II report, p. 94",
+        "value": "Ambient pressure was 1 atm.",
+        "claimId": "bass2.pressure-1atm"
+       },
+       {
+        "key": "flexPressure",
+        "label": "NASA’s words, PSI-69, line 42",
+        "value": "Select the test pressure (0.5 − 1.5 atm) for the LOI tests.",
+        "claimId": "psi69.pressure"
+       },
+       {
+        "key": "flexDroplets",
+        "label": "NASA’s words, PSI-69, line 40",
+        "value": "The FLEX experiments involve igniting and observing the burning behavior of relatively large droplets.",
+        "claimId": "psi69.droplets"
+       },
+       {
+        "key": "zayac1g",
+        "label": "NASA’s words, Zayac 2024, PDF p. 1",
+        "value": "A bright flame burns SIBAL fuel downwards in 34% oxygen at 8.2 psi",
+        "claimId": "zayac.burns-34"
+       }
+      ],
+      "claimIds": [
+       "cabin.model"
+      ],
+      "summary": "ran Lunar lander, 34% O2"
+     }
+    },
+    {
+     "type": "sentence",
+     "sentence": {
+      "text": "ZERO-DRAFT's audit found that no indexed NASA investigations provide solid-material fire data at 34% oxygen and 8.2 psia in microgravity or lunar gravity.",
+      "supports": [
+       {
+        "kind": "tool",
+        "ref": "tool#1.coverage",
+        "label": "ZERO-DRAFT’s audit: what the indexed investigations cover at this pressure (our finding, from the quotes below)",
+        "claimId": "bass2.pressure-1atm"
+       }
+      ]
+     }
+    },
+    {
+     "type": "sentence",
+     "sentence": {
+      "text": "NASA's Zayac 2024 poster does report a bright flame burning SIBAL fuel in 34% oxygen at 8.2 psi, but those tests were conducted at 1 g, not in the microgravity environment of BASS-II or a lunar habitat.",
+      "supports": [
+       {
+        "kind": "tool",
+        "ref": "tool#1.zayac1g",
+        "label": "NASA’s words, Zayac 2024, PDF p. 1",
+        "claimId": "zayac.burns-34"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.lunarAtmospheres",
+        "label": "NASA’s words, Zayac 2024, PDF p. 1",
+        "claimId": "zayac.atmospheres"
+       }
+      ]
+     }
+    },
+    {
+     "type": "done",
+     "refused": false,
+     "model": "openai/gpt-oss-120b",
+     "promptVersion": "lab-partner-tools@1+lab-partner-answer@4"
+    }
+   ]
+  },
+  {
+   "id": "readings-39",
+   "question": "Why did some oxygen readings say 39%?",
+   "events": [
+    {
+     "type": "tool",
+     "result": {
+      "id": "tool#1",
+      "name": "navigate",
+      "args": {
+       "view": "summarize",
+       "params": {
+        "test": "P22b"
+       }
+      },
+      "view": "summarize",
+      "opensView": true,
+      "summary": "showed P22b in the quarantine bay",
+      "fields": [
+       {
+        "key": "test",
+        "label": "Test",
+        "value": "P22b"
+       },
+       {
+        "key": "pi",
+        "label": "Principal investigator",
+        "value": "Fernandez-Pello"
+       },
+       {
+        "key": "material",
+        "label": "Sample, as the CSV writes it",
+        "value": "3/8\" black rod"
+       },
+       {
+        "key": "o2InitPct",
+        "label": "Calibrated initial O2 in the CSV, %",
+        "value": 20
+       },
+       {
+        "key": "o2FinalPct",
+        "label": "Calibrated final O2 in the CSV, %",
+        "value": 39.1
+       },
+       {
+        "key": "quarantined",
+        "label": "In the quarantine bay",
+        "value": "yes: its final O2 is missing or physically impossible"
+       },
+       {
+        "key": "forensicMath",
+        "label": "ZERO-DRAFT’s audit: its arithmetic that reproduces the impossible value from NASA’s row",
+        "value": "19.1 + 20.0 = 39.1",
+        "claimId": "bass2.o2forensic.p22b"
+       },
+       {
+        "key": "forensicCause",
+        "label": "ZERO-DRAFT’s audit: why the value is impossible (our finding, not the report’s)",
+        "value": "the uncalibrated initial reading was blank, so the day’s offset became the whole initial reading, and was added to the final",
+        "claimId": "bass2.o2forensic.p22b"
+       },
+       {
+        "key": "appendixRow",
+        "label": "NASA’s words, BASS-II report, p. 107",
+        "value": "20.0 39.1 ---- 19.1",
+        "claimId": "bass2.o2forensic.p22b"
+       },
+       {
+        "key": "o2Columns",
+        "label": "NASA’s words, BASS-II report, p. 103",
+        "value": "Calibrated initial O2 vol% Calibrated final O2 vol% Initial O2 vol% Final O2 vol%",
+        "claimId": "bass2.table.o2-columns"
+       },
+       {
+        "key": "offsetRule",
+        "label": "NASA’s words, BASS-II report, p. 116",
+        "value": "The CSA-CP readings were then corrected for the offset from the MCA readings for that day to provide a calibrated O2 reading for each test.",
+        "claimId": "bass2.sensor.mca-offset"
+       }
+      ],
+      "claimIds": [
+       "bass2.o2forensic.p22b"
+      ]
+     }
+    },
+    {
+     "type": "sentence",
+     "sentence": {
+      "text": "The BASS-II report lists a calibrated final O2 of 39.1 % for test P22b - a value that exceeds the initial 20 % O2 reading.",
+      "supports": [
+       {
+        "kind": "tool",
+        "ref": "tool#1.o2FinalPct",
+        "label": "Calibrated final O2 in the CSV, %",
+        "claimId": "bass2.o2forensic.p22b"
+       },
+       {
+        "kind": "quote",
+        "chunkId": "c0433",
+        "quote": "20.0 39.1 ---- 19.1",
+        "sourceId": "nasa-tm-20210011385",
+        "place": "BASS-II report, p. 107",
+        "pdfPage": 115,
+        "reportPage": 107
+       }
+      ]
+     }
+    },
+    {
+     "type": "sentence",
+     "sentence": {
+      "text": "ZERO-DRAFT's audit found that the initial O2 reading was blank, so the day's offset was applied to the whole initial reading and then added to the final, producing the impossible 39.1 % value.",
+      "supports": [
+       {
+        "kind": "tool",
+        "ref": "tool#1.forensicCause",
+        "label": "ZERO-DRAFT’s audit: why the value is impossible (our finding, not the report’s)",
+        "claimId": "bass2.o2forensic.p22b"
+       },
+       {
+        "kind": "tool",
+        "ref": "tool#1.forensicMath",
+        "label": "ZERO-DRAFT’s audit: its arithmetic that reproduces the impossible value from NASA’s row",
+        "claimId": "bass2.o2forensic.p22b"
        }
       ]
      }

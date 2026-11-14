@@ -62,8 +62,15 @@ export function RefusalBanner() {
               <Quote id="psi69.pressure" />
               <Quote id="psi69.droplets" />
             </p>
+            {lunar && isVerified('zayac.burns-34') && (
+              <p className="flex flex-col gap-1 text-sm leading-6">
+                NASA Glenn’s 1g lab tests do burn solids in this atmosphere:
+                <Quote id="zayac.burns-34" />
+              </p>
+            )}
             <p className="text-sm leading-6">
-              No investigation we indexed covers solid cabin materials at this pressure, so ZERO-DRAFT won’t predict here.
+              Nothing we indexed covers solids at this pressure in microgravity or lunar gravity, so ZERO-DRAFT won’t
+              predict here.
             </p>
           </>
         )}

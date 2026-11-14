@@ -1706,6 +1706,21 @@
     "verified": true
   },
   {
+    "id": "zayac.burns-34",
+    "topic": "atmospheres",
+    "text": "NASA Glenn's 1g lab tests burned SIBAL fabric in 34% O2 at 8.2 psi",
+    "kind": "quoted",
+    "sourceId": "zayac-2024",
+    "quote": "A bright flame burns SIBAL fuel downwards in 34% oxygen at 8.2 psi",
+    "emphasis": "34% oxygen at 8.2 psi",
+    "locator": {
+      "pdfPage": 1,
+      "reportPage": null,
+      "spansNextPage": false
+    },
+    "verified": true
+  },
+  {
     "id": "twin.stretch-rate",
     "topic": "equations",
     "text": "Stretch rate a at the current airflow and rod size",
