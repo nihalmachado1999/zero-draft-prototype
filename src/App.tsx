@@ -1,7 +1,8 @@
-import { useState, type ComponentType } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { CitationProvider } from './components/CitationProvider'
 import { FootnoteScope } from './components/FootnoteScope'
 import { Header } from './components/Header'
+import { NarrowScreenNotice } from './components/NarrowScreenNotice'
 import { ViewFrame } from './components/ViewFrame'
 import type { ViewId, ViewProps } from './lib/route'
 import { useRoute } from './lib/useRoute'
@@ -11,6 +12,14 @@ import { LabPartnerDock } from './views/LabPartnerDock'
 import { Overview } from './views/Overview'
 import { Rank } from './views/Rank'
 import { Summarize } from './views/Summarize'
+
+/** The browser tab's title on each view; the Overview is the app's own name. */
+const VIEW_TITLES: Record<ViewId, string> = {
+  overview: 'ZERO-DRAFT',
+  summarize: 'Summarize, ZERO-DRAFT',
+  rank: 'Rank, ZERO-DRAFT',
+  interpret: 'Interpret, ZERO-DRAFT',
+}
 
 const VIEW_COMPONENTS: Record<ViewId, ComponentType<ViewProps>> = {
   overview: Overview,
@@ -28,6 +37,9 @@ export default function App() {
   const route = useRoute()
   const [dockOpen, setDockOpen] = useState(false)
   const View = VIEW_COMPONENTS[route.view]
+  useEffect(() => {
+    document.title = VIEW_TITLES[route.view]
+  }, [route.view])
 
   return (
     <CitationProvider>
@@ -44,6 +56,7 @@ export default function App() {
             <LabPartnerDock open={dockOpen} onToggle={() => setDockOpen((open) => !open)} />
           </div>
         </div>
+        <NarrowScreenNotice />
       </FootnoteScope>
     </CitationProvider>
   )

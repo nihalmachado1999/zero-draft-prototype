@@ -1852,5 +1852,331 @@
     "formula": "t = (V / r) ln(C0 / C), Eq. B.2 solved for time",
     "inputs": ["bass2.cstr.model", "bass2.cstr.volume", "bass2.cstr.n2-flow"],
     "verified": true
+  },
+  {
+    "id": "bass2.sibal-scope",
+    "topic": "investigations",
+    "text": "The report's SIBAL chapter covers BASS and BASS-II: flame growth, spread and quenching extinction",
+    "kind": "quoted",
+    "sourceId": "nasa-tm-20210011385",
+    "quote": "In this report, BASS and BASS-II results will be discussed in detail. Flame growth, spread, and quenching extinction will be presented",
+    "locator": {
+      "pdfPage": 102,
+      "reportPage": 94,
+      "spansNextPage": false
+    },
+    "verified": true
+  },
+  {
+    "id": "bass2.solid-samples",
+    "topic": "investigations",
+    "text": "BASS-II burned small solid samples in the Microgravity Science Glovebox aboard the ISS",
+    "kind": "quoted",
+    "sourceId": "nasa-tm-20210011385",
+    "quote": "small scale burning of solid samples within the Microgravity Science Glovebox (MSG) aboard the International Space Station (ISS)",
+    "locator": {
+      "pdfPage": 9,
+      "reportPage": null,
+      "spansNextPage": false
+    },
+    "verified": true
+  },
+  {
+    "id": "bass2.sibal-o2",
+    "topic": "investigations",
+    "text": "Those tests ran at 16 to 21% O2",
+    "kind": "quoted",
+    "sourceId": "nasa-tm-20210011385",
+    "quote": "The tests were conducted in ambient O2 molar fraction of 16 to 21 percent.",
+    "locator": {
+      "pdfPage": 102,
+      "reportPage": 94,
+      "spansNextPage": false
+    },
+    "verified": true
+  },
+  {
+    "id": "zayac.fm2-flight",
+    "topic": "investigations",
+    "text": "NASA Glenn's FM2 will fly to the lunar surface to study burning in lunar gravity",
+    "kind": "quoted",
+    "sourceId": "zayac-2024",
+    "quote": "Flammability of Materials on the Moon will be sent to the Lunar surface on the SpaceX Human Lander System demonstration flight.",
+    "locator": {
+      "pdfPage": 1,
+      "reportPage": null,
+      "spansNextPage": false
+    },
+    "verified": true
+  },
+  {
+    "id": "psi26.platform",
+    "topic": "investigations",
+    "text": "BASS ran aboard the ISS in the Microgravity Science Glovebox",
+    "kind": "quoted",
+    "sourceId": "psi-26",
+    "quote": "The experiment was conducted aboard the International Space Station (ISS) inside the Microgravity Glove Box (MSG).",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 40
+    },
+    "verified": true
+  },
+  {
+    "id": "psi26.fuels",
+    "topic": "investigations",
+    "text": "BASS burned cotton-fiberglass fabric, Nomex fabric and Ultem",
+    "kind": "quoted",
+    "sourceId": "psi-26",
+    "quote": "Custom-made fabric samples consisting of 75% cotton and 25% fiberglass (by mass) measuring were used as a fuel source as well as Nomex fabric and Ultem.",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 40
+    },
+    "verified": true
+  },
+  {
+    "id": "psi26.suppression",
+    "topic": "investigations",
+    "text": "BASS objective: test an inert gaseous extinguishing agent",
+    "kind": "quoted",
+    "sourceId": "psi-26",
+    "quote": "Assess the effectiveness of an inert, gaseous extinguishing agent (similar to that used on ISS) in putting out flames",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 62
+    },
+    "verified": true
+  },
+  {
+    "id": "psi26.project-type",
+    "topic": "investigations",
+    "text": "BASS: a microgravity investigation",
+    "kind": "quoted",
+    "sourceId": "psi-26",
+    "quote": "Microgravity Investigation",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 66
+    },
+    "verified": true
+  },
+  {
+    "id": "psi62.project-type",
+    "topic": "investigations",
+    "text": "PSI-62: a ground investigation (computer modeling)",
+    "kind": "quoted",
+    "sourceId": "psi-62",
+    "quote": "Ground Investigation",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 64
+    },
+    "verified": true
+  },
+  {
+    "id": "psi69.platform-field",
+    "topic": "investigations",
+    "text": "FLEX's Flight Platform field: ISS",
+    "kind": "quoted",
+    "sourceId": "psi-69",
+    "quote": "International Space Station (ISS)",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 59
+    },
+    "verified": true
+  },
+  {
+    "id": "psi69.project-type",
+    "topic": "investigations",
+    "text": "FLEX: a microgravity investigation",
+    "kind": "quoted",
+    "sourceId": "psi-69",
+    "quote": "Microgravity Investigation",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 75
+    },
+    "verified": true
+  },
+  {
+    "id": "psi98.objective",
+    "topic": "investigations",
+    "text": "Saffire-I objectives: how fast a large fire grows, and low-g flammability limits",
+    "kind": "quoted",
+    "sourceId": "psi-98",
+    "quote": "determine how rapidly a large scale fire grows in low-gravity and (2) investigate the low-g flammability limits",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 59
+    },
+    "verified": true
+  },
+  {
+    "id": "psi98.spacecraft-materials",
+    "topic": "investigations",
+    "text": "Saffire-I record: flammability limits for several spacecraft materials",
+    "kind": "quoted",
+    "sourceId": "psi-98",
+    "quote": "Results determine microgravity flammability limits for several spacecraft materials",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 67
+    },
+    "verified": true
+  },
+  {
+    "id": "psi98.proposal-title",
+    "topic": "investigations",
+    "text": "Saffire-I's Proposal Title field: smoke characterization for fire detection",
+    "kind": "quoted",
+    "sourceId": "psi-98",
+    "quote": "Characterization of Smoke from Microgravity Fires for Improved Spacecraft Fire Detection",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 65
+    },
+    "verified": true
+  },
+  {
+    "id": "psi98.project-type",
+    "topic": "investigations",
+    "text": "Saffire-I: a microgravity investigation",
+    "kind": "quoted",
+    "sourceId": "psi-98",
+    "quote": "Microgravity Investigation",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 64
+    },
+    "verified": true
+  },
+  {
+    "id": "psi99.cygnus",
+    "topic": "investigations",
+    "text": "Saffire-II ran on a Cygnus after it left the ISS",
+    "kind": "quoted",
+    "sourceId": "psi-99",
+    "quote": "The Saffire-II experiment was performed on the Orbital Science’s Cygnus resupply vehicle after it deberthed from the ISS.",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 40
+    },
+    "verified": true
+  },
+  {
+    "id": "psi99.growth",
+    "topic": "investigations",
+    "text": "Saffire-II objective: how fast a large fire grows in low gravity",
+    "kind": "quoted",
+    "sourceId": "psi-99",
+    "quote": "to determine how rapidly a large scale fire grows in low-gravity",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 58
+    },
+    "verified": true
+  },
+  {
+    "id": "psi99.spacecraft-materials",
+    "topic": "investigations",
+    "text": "Saffire-II record: flammability limits for several spacecraft materials",
+    "kind": "quoted",
+    "sourceId": "psi-99",
+    "quote": "Results determine microgravity flammability limits for several spacecraft materials",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 65
+    },
+    "verified": true
+  },
+  {
+    "id": "psi99.project-type",
+    "topic": "investigations",
+    "text": "Saffire-II: a microgravity investigation",
+    "kind": "quoted",
+    "sourceId": "psi-99",
+    "quote": "Microgravity Investigation",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 62
+    },
+    "verified": true
+  },
+  {
+    "id": "psi100.growth",
+    "topic": "investigations",
+    "text": "Saffire-III objective: how fast a large fire grows in low gravity",
+    "kind": "quoted",
+    "sourceId": "psi-100",
+    "quote": "determine how rapidly a large scale fire grows in low-gravity",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 59
+    },
+    "verified": true
+  },
+  {
+    "id": "psi100.project-type",
+    "topic": "investigations",
+    "text": "Saffire-III: a microgravity investigation",
+    "kind": "quoted",
+    "sourceId": "psi-100",
+    "quote": "Microgravity Investigation",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 63
+    },
+    "verified": true
+  },
+  {
+    "id": "psi102.platform-field",
+    "topic": "investigations",
+    "text": "SAME's Flight Platform field: ISS",
+    "kind": "quoted",
+    "sourceId": "psi-102",
+    "quote": "International Space Station (ISS)",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 46
+    },
+    "verified": true
+  },
+  {
+    "id": "psi102.project-type",
+    "topic": "investigations",
+    "text": "SAME: a microgravity investigation",
+    "kind": "quoted",
+    "sourceId": "psi-102",
+    "quote": "Microgravity Investigation",
+    "locator": {
+      "file": "i_Investigation.txt",
+      "line": 63
+    },
+    "verified": true
+  },
+  {
+    "id": "rank.relevance",
+    "topic": "relevance",
+    "text": "ZERO-DRAFT relevance of an indexed investigation to a lunar lander and rover atmosphere: our judgment call, not NASA's",
+    "kind": "computed",
+    "formula": "relevance = 100 x (0.35 atmosphere + 0.25 gravity + 0.20 phenomena + 0.10 spacecraft materials + 0.10 test table). Atmosphere: half for O2 within half a point of the tested range, half for pressure within 0.3 psi of it. Gravity: half for microgravity (not lunar), 0 for a ground study. Phenomena: the share of ignition, flame spread, extinction, suppression and detection its record names. Anything not stated scores 0.",
+    "inputs": [
+      "zayac.atmospheres",
+      "zayac.fm2-flight"
+    ],
+    "verified": true
+  },
+  {
+    "id": "inv.bass2-o2-range",
+    "topic": "relevance",
+    "text": "The O2 range BASS-II tests started at, from NASA's raw CSV",
+    "kind": "computed",
+    "formula": "lowest and highest calibrated initial O2 over the tests with usable O2 in the PSI-25 CSV",
+    "inputs": [
+      "bass2.table.o2-columns"
+    ],
+    "verified": true
   }
 ]

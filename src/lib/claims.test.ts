@@ -26,13 +26,13 @@ const claim = (id: string) => {
 const quoteOf = (id: string) => normalize(claim(id).quote ?? '')
 
 describe('claims.json', () => {
-  it('holds the 84 report claims, the 36 PSI claims, the 2 Zayac poster claims and the 12 computed claims, each id once', () => {
-    expect(CLAIMS).toHaveLength(134)
-    expect(new Set(CLAIMS.map((c) => c.id)).size).toBe(134)
-    expect(CLAIMS.filter((c) => c.sourceId === 'nasa-tm-20210011385')).toHaveLength(84)
-    expect(CLAIMS.filter((c) => typeof c.locator?.pdfPage === 'number')).toHaveLength(86)
-    expect(CLAIMS.filter((c) => typeof c.locator?.file === 'string')).toHaveLength(36)
-    expect(CLAIMS.filter((c) => c.kind === 'computed')).toHaveLength(12)
+  it('holds the 87 report claims, the 55 PSI claims, the 3 Zayac poster claims and the 14 computed claims, each id once', () => {
+    expect(CLAIMS).toHaveLength(159)
+    expect(new Set(CLAIMS.map((c) => c.id)).size).toBe(159)
+    expect(CLAIMS.filter((c) => c.sourceId === 'nasa-tm-20210011385')).toHaveLength(87)
+    expect(CLAIMS.filter((c) => typeof c.locator?.pdfPage === 'number')).toHaveLength(90)
+    expect(CLAIMS.filter((c) => typeof c.locator?.file === 'string')).toHaveLength(55)
+    expect(CLAIMS.filter((c) => c.kind === 'computed')).toHaveLength(14)
   })
 
   it('quotes the lunar lander atmospheres from page 1 of the Zayac 2024 poster', () => {

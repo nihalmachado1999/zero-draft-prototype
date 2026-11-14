@@ -488,6 +488,8 @@ index = 100 × Σ(wᵢ · cᵢ) / Σ(wᵢ)    over its two components, low-O2 bu
 
 Relevance of each indexed investigation to the ISS and lunar atmospheres, from F7.
 
+**As built (14 Nov):** a section at the bottom of RANK (`components/rank/InvestigationRelevance.tsx`, `RelevanceTable.tsx`; logic in `lib/investigations.ts` and `lib/relevance.ts`). The targets are Zayac's two lunar lander and rover atmospheres (`zayac.atmospheres`); no source in our set states the ISS cabin atmosphere. Every fact is a verified claim (PSI record lines, the BASS-II report, the CSV for BASS-II's O2 range) or null. Scoring as F7 Output 2: atmosphere is half for O2 within 0.5 point of the tested range and half for pressure within 0.3 psi; gravity is 0.5 for microgravity (nothing ran in lunar gravity) and 0 for a ground study; phenomena is the share of the five the record names; materials counts only where NASA calls what was burned spacecraft materials (Saffire-III's sentence is copied from Saffire-I's, so it isn't counted). Results: for 21%/14.7 psia, BASS-II 73.5, BASS 59.5, Saffire-I 58, FLEX 38, Saffire-II 30.5, SAME 26.5, Saffire-III 20.5, PSI-62 4; for 34%/8.2 psia nothing matches both, FLEX's pressure range is the closest.
+
 ### F4. INTERPRET: cabin fire, toxicity and suppression simulator (P0)
 
 **Purpose:** a real-time "what if" for a fire in a sealed volume, built from NASA's own validated relations, with alarms only when the model earns them.
@@ -666,6 +668,8 @@ Unverified claims never appear outside the drawer.
   - 0.10 × real cabin materials
   - 0.10 × test-level data available
   - Unknown inputs score 0 and are flagged. The weights are shown as "our judgment call".
+
+**As built (14 Nov):** the index is built from verified quotes, without the LLM extraction (`text.ts`, `extract.ts`, `verify.ts`, `briefing.ts` and F2b's `outcomes.ts` are still not built). Output 1 is the investigation column of the F3d table on RANK rather than a separate strip; the "Record inconsistencies" list is at the bottom of SUMMARIZE, with a fifth item found while indexing: Saffire-I's Proposal Title field is about smoke for fire detection (`psi98.proposal-title`), SAME's subject, while its objectives are fire growth and flammability limits.
 
 ### F8. NASA photo reveal (P1)
 

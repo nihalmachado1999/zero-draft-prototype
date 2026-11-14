@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Note } from '../components/Note'
 import { CheckedAgainstNasa } from '../components/summarize/CheckedAgainstNasa'
 import { DistributionStrip } from '../components/summarize/DistributionStrip'
+import { RecordInconsistencies } from '../components/summarize/RecordInconsistencies'
 import { FilterStrip } from '../components/summarize/FilterStrip'
 import { ENTRY_FLIGHT_DELAY_MS, landedAt } from '../components/summarize/flight'
 import { QuarantineBay } from '../components/summarize/QuarantineBay'
@@ -208,6 +209,7 @@ function Explorer({ bass2, audit, params }: { bass2: Bass2File; audit: AuditFile
           <DistributionStrip rows={shown} />
         </section>
         <CheckedAgainstNasa rows={rows} />
+        <RecordInconsistencies />
       </div>
 
       <RecordDrawer

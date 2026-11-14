@@ -117,3 +117,12 @@ export function sourceLink(source: Source): string | null {
   if (source.doi) return `https://doi.org/${source.doi}`
   return null
 }
+
+/**
+ * A PSI record field's value as its claim quotes it: the text after the field name's tab, e.g.
+ * "Comment[Investigation Start Date]\t03-02-2001" gives "03-02-2001". Empty if there is none.
+ */
+export function quotedField(id: string): string {
+  const quote = getClaim(id)?.quote ?? ''
+  return quote.includes('\t') ? (quote.split('\t').at(-1)?.trim() ?? '') : ''
+}

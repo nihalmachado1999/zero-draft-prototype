@@ -3,6 +3,7 @@ import { Note } from '../components/Note'
 import type { FingerprintNotes } from '../components/rank/Fingerprint'
 import { FlammabilityMap } from '../components/rank/FlammabilityMap'
 import { IgnitionRace } from '../components/rank/IgnitionRace'
+import { InvestigationRelevance } from '../components/rank/InvestigationRelevance'
 import { Leaderboard } from '../components/rank/Leaderboard'
 import { NotRanked } from '../components/rank/NotRanked'
 import type { SliderNotes } from '../components/rank/WeightSliders'
@@ -21,7 +22,7 @@ import {
   type UnrankedGroup,
 } from '../lib/risk'
 
-/** #/rank : F3 Orbital Risk Index, flammability map, ignition race. Receives `params` but reads none yet. */
+/** #/rank : F3 Orbital Risk Index, flammability map, ignition race, investigation relevance (F3d). */
 export function Rank() {
   const data = useAuditData()
   return (
@@ -52,6 +53,7 @@ function RankStage({ rows }: { rows: Bass2Row[] }) {
         <FlammabilityMap rug={rug} />
         <IgnitionRace />
       </div>
+      <InvestigationRelevance rows={rows} />
     </div>
   )
 }

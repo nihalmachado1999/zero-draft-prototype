@@ -61,6 +61,7 @@ src/
   lib/cabin.ts               cabin fire, toxicity and N2 dilution model. Pure, fully tested.
   lib/audit.ts               BASS-II spreadsheet checks. Pure, fully tested.
   lib/risk.ts                Orbital Risk Index. Pure, fully tested.
+  lib/investigations.ts      the investigation index: what each PSI investigation tested, each fact on a verified claim. Pure.
   lib/relevance.ts           investigation relevance scoring (P1). Pure, fully tested.
   lib/burnTwin.ts            Burn Twin state: which flame is lit, where each went out, the drain. Pure, fully tested. lib/burnStore.ts is its store and React hook.
   lib/twinLayout.ts          where things sit on the Burn Twin stage. Pure, tested.
