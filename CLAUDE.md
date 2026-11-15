@@ -22,7 +22,7 @@ The full plan is `docs/SPEC.md`. Before writing code for a milestone, read that 
 - Fonts: `@fontsource-variable/archivo` for our words, `@fontsource-variable/source-serif-4` for NASA's quoted words, `@fontsource-variable/jetbrains-mono` for numbers
 - Vitest for tests, tsx to run scripts, unpdf to read PDF text
 - Deploy on Vercel: static site plus serverless functions in `api/`
-- The LLM is Groq (`GROQ_API_KEY`, `GROQ_MODEL`, e.g. `openai/gpt-oss-120b`), called with plain `fetch`, whenever `GROQ_API_KEY` is set; otherwise Gemini through `@google/genai` (`GEMINI_API_KEY`, `GEMINI_MODEL`). Only `pipeline/scripts/llm.ts` talks to either (SPEC §7.3); `api/` uses that module.
+- The LLM is OrcaRouter (`ORCA_API_KEY`, `ORCA_MODEL`, an exact model id such as `deepseek/deepseek-v4.1-flash-free`, never a router alias like `orcarouter/auto`), called with plain `fetch`, whenever both are set; otherwise Groq (`GROQ_API_KEY`, `GROQ_MODEL`, e.g. `openai/gpt-oss-120b`) whenever `GROQ_API_KEY` is set; otherwise Gemini through `@google/genai` (`GEMINI_API_KEY`, `GEMINI_MODEL`). The provider is chosen once per run from which keys are set, with no failover on errors. Only `pipeline/scripts/llm.ts` talks to any of them (SPEC §7.3); `api/` uses that module.
 - Node 22 or newer.
 
 ## Commands

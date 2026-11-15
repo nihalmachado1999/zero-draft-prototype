@@ -106,14 +106,14 @@ No NASA logos or insignia are used anywhere.
 - **Fonts** (SIL Open Font License, via Fontsource): Archivo, Source Serif 4, JetBrains Mono.
 - **Interaction guidelines** adapted from Rauno Freiberg's Web Interface Guidelines, https://interfaces.rauno.me.
 - **Design skill** used while building: `emil-design-eng` by Emil Kowalski (MIT License), in `.claude/skills/`.
-- **LLM APIs**: Groq (`openai/gpt-oss-120b`) for Lab Partner, with Google Gemini as the fallback; Google Gemini (`gemini-3.5-flash`) for the offline pipeline (test outcomes, investigation summaries, briefing).
+- **LLM APIs**: OrcaRouter (`deepseek/deepseek-v4.1-flash-free`, pinned to one exact model) for Lab Partner when `ORCA_API_KEY` and `ORCA_MODEL` are set, with Groq (`openai/gpt-oss-120b`) and then Google Gemini as the fallbacks; the shipped offline pipeline files (test outcomes, investigation summaries, briefing) were written by Google Gemini (`gemini-3.5-flash`).
 
 ## Use of AI
 
 **Yes.**
 
 - **Code**: Claude Code (Anthropic) wrote the application code, directed and reviewed by the team. Commits it made carry a `Co-Authored-By: Claude` line.
-- **Lab Partner**: an LLM (Groq, `openai/gpt-oss-120b`; Gemini when no Groq key is set) chooses tools and writes the answers. Every answer shows **"AI-written, checked"**.
+- **Lab Partner**: an LLM (OrcaRouter, `deepseek/deepseek-v4.1-flash-free`; Groq when no OrcaRouter key and model are set; Gemini when no Groq key is set) chooses tools and writes the answers. Every answer shows **"AI-written, checked"**.
 - **Test outcomes**: an LLM (Google `gemini-3.5-flash`) read NASA's "Test observations" note for each test in Appendix A of the BASS-II report and said what the flame did (sustained, brief, no ignition, or not stated). A script keeps an outcome only if its quote is in that test's own row. Shown as **"AI-read from NASA's notes, quote checked"**, apart from the sensors' verdict. The notes describe a sustained flame in 102 tests against the 65 the sensors confirm, including 19 of the 25 SIBAL fabric tests whose fires were too small for the sensors.
 - **Investigation summaries**: the same Gemini model summarized each investigation from NASA's own PSI record of it. A script keeps a value or sentence only if its quote is in that record and its numbers are in the quote; the rest is "Not stated" and listed in `pipeline/out/review.md`. Shown as **"AI-written, checked"**.
 - **Dataset briefing**: 4 to 6 sentences written by the same Gemini model from the audit's statistics only. A sentence is kept only if every number in it is in those statistics; `npm test` runs that check. Shown as **"AI-written, numbers checked"**.
@@ -133,9 +133,11 @@ npm ci
 Create `.env.local` (it's git-ignored; never commit it):
 
 ```
-GROQ_API_KEY=your Groq key
-GROQ_MODEL=openai/gpt-oss-120b
+ORCA_API_KEY=your OrcaRouter key
+ORCA_MODEL=deepseek/deepseek-v4.1-flash-free
 ```
+
+The app uses the first provider whose keys are set: OrcaRouter (`ORCA_API_KEY` and `ORCA_MODEL`), then Groq (`GROQ_API_KEY` and `GROQ_MODEL`, e.g. `openai/gpt-oss-120b`), then Gemini (`GEMINI_API_KEY` and `GEMINI_MODEL`). It does not switch providers when a call fails. Set `ORCA_MODEL` to an exact model id, not `orcarouter/auto` or `orcarouter/free`: those can change the model between calls, and every generated file records the model that wrote it. To re-run the pipeline on Gemini, as the shipped files were, leave the OrcaRouter and Groq values empty.
 
 ```bash
 npm run dev
@@ -153,12 +155,12 @@ npm run dev
 ## Deploy on Vercel
 
 1. Import the GitHub repository in Vercel. The framework preset is **Vite**: build command `npm run build`, output directory `dist`.
-2. In **Project → Settings → Environment Variables**, add `GROQ_API_KEY` and `GROQ_MODEL` (`openai/gpt-oss-120b`).
+2. In **Project → Settings → Environment Variables**, add `ORCA_API_KEY` and `ORCA_MODEL` (`deepseek/deepseek-v4.1-flash-free`). Without them the endpoint uses Groq (`GROQ_API_KEY`, `GROQ_MODEL`), then Gemini.
 3. Deploy. `vercel.json` gives the `/api/lab-partner` function 60 s for its two LLM calls.
 4. Check it:
    - Open `/api/lab-partner` in a browser. It should say `{"error":"Ask with POST."}`.
    - Open the site, open Lab Partner and ask a question. A tool line and checked sentences should appear.
-5. **Limits**: Groq's free tier allows 1,000 requests a day but 8,000 tokens a minute, about one live question a minute for everyone. The cached suggested questions don't count against it.
+5. **Limits**: OrcaRouter's free model can be rate-limited or withdrawn, and the app does not fall back to Groq on an error. If it matters on demo day, deploy with Groq's keys instead. Groq's free tier allows 1,000 requests a day but 8,000 tokens a minute, about one live question a minute for everyone. The cached suggested questions don't count against it.
 
 ## Known limitations
 

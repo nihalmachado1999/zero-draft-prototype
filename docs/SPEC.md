@@ -887,9 +887,11 @@ all source text -- chunks.ts --> api/_data/chunks.json                          
 
 **Human review:** read `review.md`, spot-check 3 fields per investigation against the PDFs, and record who checked and when in `REVIEWED.md`.
 
-### 7.3 Provider: Groq, with Gemini as the fallback
+### 7.3 Provider: OrcaRouter first, then Groq, then Gemini
 
-- Groq when `GROQ_API_KEY` is set: `GROQ_API_KEY` and `GROQ_MODEL` (`openai/gpt-oss-120b`), through Groq's OpenAI-style chat completions API with plain `fetch` (no SDK). Function calling for the tools, `json_schema` output for answers, `reasoning_effort: low`.
+- OrcaRouter when `ORCA_API_KEY` and `ORCA_MODEL` are both set (`deepseek/deepseek-v4.1-flash-free`), through its OpenAI-style chat completions API with plain `fetch` (the same code as Groq's). `ORCA_MODEL` is an exact model id, never a router alias, so the `model` recorded in every generated file is stable. For `thinkingLevel: MINIMAL` (Lab Partner) it sends `thinking: { type: "disabled" }`, because DeepSeek's thinking counts against the 400-token answer cap and left answers empty; other levels send `reasoning_effort`.
+- The provider is chosen once per call from which keys are set. There is no failover when a call fails.
+- Groq when `GROQ_API_KEY` is set and OrcaRouter is not: `GROQ_API_KEY` and `GROQ_MODEL` (`openai/gpt-oss-120b`), through Groq's OpenAI-style chat completions API with plain `fetch` (no SDK). Function calling for the tools, `json_schema` output for answers, `reasoning_effort: low`.
 - Otherwise Gemini, as below.
 - SDK: `@google/genai` (3.0 at the time of writing; needs Node 22 or newer).
 - One module, `pipeline/scripts/llm.ts`, used by the scripts and `api/`, exports `complete({ system, user, tools?, json })`. Nothing else imports the SDK.
