@@ -826,9 +826,10 @@ function rateLimitWaitMs(message) {
 	const asked = match && h + m + sec + ms > 0 ? h * 36e5 + m * 6e4 + sec * 1e3 + ms : 29e3;
 	return Math.min(RATE_LIMIT_MAX_WAIT_MS, Math.max(1e3, Math.ceil(asked) + 1e3));
 }
-/** Which provider answers: Groq whenever its key is set. */
-function provider() {
-	return process.env.GROQ_API_KEY?.trim() ? "groq" : "gemini";
+/** Which provider answers: OrcaRouter when its key and model are set, else Groq when its key is set, else Gemini. */
+function provider(env = process.env) {
+	if (env.ORCA_API_KEY?.trim() && env.ORCA_MODEL?.trim()) return "orca";
+	return env.GROQ_API_KEY?.trim() ? "groq" : "gemini";
 }
 /**
 * One call to the LLM. A busy reply (503, 429) is retried twice, after 0.8 s and 2 s, as long as
@@ -862,12 +863,29 @@ async function completeWithin(request) {
 	}
 }
 function completeOnce(request) {
-	return provider() === "groq" ? completeGroq(request) : completeGemini(request);
+	switch (provider()) {
+		case "orca": return completeChat(request, {
+			label: "OrcaRouter",
+			url: ORCA_URL,
+			key: requireEnv("ORCA_API_KEY"),
+			model: requireEnv("ORCA_MODEL")
+		});
+		case "groq": return completeChat(request, {
+			label: "Groq",
+			url: GROQ_URL,
+			key: requireEnv("GROQ_API_KEY"),
+			model: requireEnv("GROQ_MODEL")
+		});
+		default: return completeGemini(request);
+	}
 }
 var GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+var ORCA_URL = "https://api.orcarouter.ai/v1/chat/completions";
 /** Tokens a Groq reasoning model may think for, on top of the answer's own cap. */
 var REASONING_ROOM = 1024;
 var isGroqReasoning = (model) => /gpt-oss|qwen3/.test(model);
+/** OrcaRouter's models (DeepSeek and others) think too, and that thinking counts against the cap. */
+var thinksAgainstCap = (endpoint) => endpoint.label === "OrcaRouter" || isGroqReasoning(endpoint.model);
 /** How hard a Groq reasoning model thinks: gpt-oss takes low…high, Qwen 3 can switch it off. */
 function groqReasoning(model, level) {
 	if (!level) return {};
@@ -878,6 +896,16 @@ function groqReasoning(model, level) {
 	if (/qwen3/.test(model)) return { reasoning_effort: level === "MINIMAL" || level === "LOW" ? "none" : "default" };
 	return {};
 }
+/**
+* How hard an OrcaRouter model thinks. MINIMAL switches thinking off: DeepSeek's thinking counts
+* against the reply's cap, and with it on, Lab Partner's 400-token answers came back empty
+* (all the tokens spent thinking). The other levels use reasoning_effort.
+*/
+function orcaReasoning(level) {
+	if (!level) return {};
+	if (level === "MINIMAL") return { thinking: { type: "disabled" } };
+	return { reasoning_effort: level === "HIGH" ? "high" : level === "MEDIUM" ? "medium" : "low" };
+}
 function parseArgs(text) {
 	try {
 		const value = JSON.parse(text ?? "{}");
@@ -886,9 +914,8 @@ function parseArgs(text) {
 		return {};
 	}
 }
-async function completeGroq(request) {
-	const key = requireEnv("GROQ_API_KEY");
-	const model = requireEnv("GROQ_MODEL");
+async function completeChat(request, endpoint) {
+	const { key, model } = endpoint;
 	const body = {
 		model,
 		messages: [{
@@ -899,8 +926,8 @@ async function completeGroq(request) {
 			content: request.user
 		}],
 		temperature: request.temperature ?? 0,
-		...request.maxOutputTokens ? { max_completion_tokens: request.maxOutputTokens + (isGroqReasoning(model) ? REASONING_ROOM : 0) } : {},
-		...groqReasoning(model, request.thinkingLevel),
+		...request.maxOutputTokens ? { max_completion_tokens: request.maxOutputTokens + (thinksAgainstCap(endpoint) ? REASONING_ROOM : 0) } : {},
+		...endpoint.label === "OrcaRouter" ? orcaReasoning(request.thinkingLevel) : groqReasoning(model, request.thinkingLevel),
 		...request.tools?.length ? {
 			tools: request.tools.map((tool) => ({
 				type: "function",
@@ -920,7 +947,7 @@ async function completeGroq(request) {
 			}
 		} : { type: "json_object" } } : {}
 	};
-	const response = await fetch(GROQ_URL, {
+	const response = await fetch(endpoint.url, {
 		method: "POST",
 		headers: {
 			authorization: `Bearer ${key}`,
@@ -929,7 +956,7 @@ async function completeGroq(request) {
 		body: JSON.stringify(body),
 		signal: AbortSignal.timeout(request.timeoutMs ?? 6e4)
 	});
-	if (!response.ok) throw new Error(`${response.status} from Groq: ${(await response.text()).slice(0, 300)}`);
+	if (!response.ok) throw new Error(`${response.status} from ${endpoint.label}: ${(await response.text()).slice(0, 300)}`);
 	const data = await response.json();
 	const choice = data.choices?.[0];
 	const message = choice?.message ?? {};

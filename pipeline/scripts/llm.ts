@@ -1,6 +1,10 @@
 // The one module that talks to an LLM (SPEC §7.3). The pipeline scripts and api/ call complete()
 // from here; nothing else knows which provider answers.
 //
+// Which provider answers, first match wins:
+// - OrcaRouter, when ORCA_API_KEY and ORCA_MODEL are both set. ORCA_MODEL is an exact model id
+//   (deepseek/deepseek-v4.1-flash-free), never a router alias like orcarouter/auto or
+//   orcarouter/free, which can change the model between calls. OpenAI-style HTTP API, plain fetch.
 // - Groq, when GROQ_API_KEY is set: GROQ_API_KEY and GROQ_MODEL (e.g. openai/gpt-oss-120b), through
 //   Groq's OpenAI-style HTTP API with plain fetch.
 // - Otherwise Gemini: GEMINI_API_KEY and GEMINI_MODEL, through @google/genai (only imported here).
@@ -51,7 +55,7 @@ export function loadLocalEnv(path = '.env.local'): void {
   if (existsSync(path)) process.loadEnvFile(path)
 }
 
-type EnvName = 'GEMINI_API_KEY' | 'GEMINI_MODEL' | 'GROQ_API_KEY' | 'GROQ_MODEL'
+type EnvName = 'GEMINI_API_KEY' | 'GEMINI_MODEL' | 'GROQ_API_KEY' | 'GROQ_MODEL' | 'ORCA_API_KEY' | 'ORCA_MODEL'
 
 function requireEnv(name: EnvName): string {
   const value = process.env[name]?.trim()
@@ -98,9 +102,10 @@ export function rateLimitWaitMs(message: string): number {
   return Math.min(RATE_LIMIT_MAX_WAIT_MS, Math.max(1_000, Math.ceil(asked) + 1_000))
 }
 
-/** Which provider answers: Groq whenever its key is set. */
-export function provider(): 'groq' | 'gemini' {
-  return process.env.GROQ_API_KEY?.trim() ? 'groq' : 'gemini'
+/** Which provider answers: OrcaRouter when its key and model are set, else Groq when its key is set, else Gemini. */
+export function provider(env: Record<string, string | undefined> = process.env): 'orca' | 'groq' | 'gemini' {
+  if (env.ORCA_API_KEY?.trim() && env.ORCA_MODEL?.trim()) return 'orca'
+  return env.GROQ_API_KEY?.trim() ? 'groq' : 'gemini'
 }
 
 /**
@@ -138,14 +143,32 @@ async function completeWithin(request: CompleteRequest): Promise<CompleteResult>
 }
 
 function completeOnce(request: CompleteRequest): Promise<CompleteResult> {
-  return provider() === 'groq' ? completeGroq(request) : completeGemini(request)
+  switch (provider()) {
+    case 'orca':
+      return completeChat(request, { label: 'OrcaRouter', url: ORCA_URL, key: requireEnv('ORCA_API_KEY'), model: requireEnv('ORCA_MODEL') })
+    case 'groq':
+      return completeChat(request, { label: 'Groq', url: GROQ_URL, key: requireEnv('GROQ_API_KEY'), model: requireEnv('GROQ_MODEL') })
+    default:
+      return completeGemini(request)
+  }
 }
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const ORCA_URL = 'https://api.orcarouter.ai/v1/chat/completions'
+
+/** An OpenAI-style chat completions endpoint: Groq and OrcaRouter speak the same API. */
+interface ChatEndpoint {
+  label: string
+  url: string
+  key: string
+  model: string
+}
 
 /** Tokens a Groq reasoning model may think for, on top of the answer's own cap. */
 const REASONING_ROOM = 1_024
 const isGroqReasoning = (model: string) => /gpt-oss|qwen3/.test(model)
+/** OrcaRouter's models (DeepSeek and others) think too, and that thinking counts against the cap. */
+const thinksAgainstCap = (endpoint: ChatEndpoint) => endpoint.label === 'OrcaRouter' || isGroqReasoning(endpoint.model)
 
 /** How hard a Groq reasoning model thinks: gpt-oss takes low…high, Qwen 3 can switch it off. */
 function groqReasoning(model: string, level: CompleteRequest['thinkingLevel']): Record<string, unknown> {
@@ -157,7 +180,18 @@ function groqReasoning(model: string, level: CompleteRequest['thinkingLevel']): 
   return {}
 }
 
-interface GroqReply {
+/**
+ * How hard an OrcaRouter model thinks. MINIMAL switches thinking off: DeepSeek's thinking counts
+ * against the reply's cap, and with it on, Lab Partner's 400-token answers came back empty
+ * (all the tokens spent thinking). The other levels use reasoning_effort.
+ */
+export function orcaReasoning(level: CompleteRequest['thinkingLevel']): Record<string, unknown> {
+  if (!level) return {}
+  if (level === 'MINIMAL') return { thinking: { type: 'disabled' } }
+  return { reasoning_effort: level === 'HIGH' ? 'high' : level === 'MEDIUM' ? 'medium' : 'low' }
+}
+
+interface ChatReply {
   model?: string
   choices?: Array<{
     finish_reason?: string
@@ -175,9 +209,8 @@ function parseArgs(text: string | undefined): Record<string, unknown> {
   }
 }
 
-async function completeGroq(request: CompleteRequest): Promise<CompleteResult> {
-  const key = requireEnv('GROQ_API_KEY')
-  const model = requireEnv('GROQ_MODEL')
+async function completeChat(request: CompleteRequest, endpoint: ChatEndpoint): Promise<CompleteResult> {
+  const { key, model } = endpoint
   const body = {
     model,
     messages: [
@@ -187,9 +220,9 @@ async function completeGroq(request: CompleteRequest): Promise<CompleteResult> {
     temperature: request.temperature ?? 0,
     // A reasoning model's thinking counts against the cap, so it gets room on top of the answer's.
     ...(request.maxOutputTokens
-      ? { max_completion_tokens: request.maxOutputTokens + (isGroqReasoning(model) ? REASONING_ROOM : 0) }
+      ? { max_completion_tokens: request.maxOutputTokens + (thinksAgainstCap(endpoint) ? REASONING_ROOM : 0) }
       : {}),
-    ...groqReasoning(model, request.thinkingLevel),
+    ...(endpoint.label === 'OrcaRouter' ? orcaReasoning(request.thinkingLevel) : groqReasoning(model, request.thinkingLevel)),
     ...(request.tools?.length
       ? {
           tools: request.tools.map((tool) => ({
@@ -207,15 +240,15 @@ async function completeGroq(request: CompleteRequest): Promise<CompleteResult> {
         }
       : {}),
   }
-  const response = await fetch(GROQ_URL, {
+  const response = await fetch(endpoint.url, {
     method: 'POST',
     headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(request.timeoutMs ?? 60_000),
   })
   // The status leads the message, so a 429 or 503 is retried and explained like Gemini's.
-  if (!response.ok) throw new Error(`${response.status} from Groq: ${(await response.text()).slice(0, 300)}`)
-  const data = (await response.json()) as GroqReply
+  if (!response.ok) throw new Error(`${response.status} from ${endpoint.label}: ${(await response.text()).slice(0, 300)}`)
+  const data = (await response.json()) as ChatReply
   const choice = data.choices?.[0]
   const message = choice?.message ?? {}
   return {
