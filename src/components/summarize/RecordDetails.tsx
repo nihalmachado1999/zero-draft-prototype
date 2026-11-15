@@ -17,11 +17,12 @@ import {
   type Severity,
 } from '../../lib/audit'
 import { getClaim, getSource, sourceLink, testNoteClaimIds } from '../../lib/claims'
-import { OUTCOME_LABELS, useTestOutcomes } from '../../lib/generatedData'
+import { useOutcome } from '../../lib/useOutcome'
 import { replayPresetFor } from '../../lib/interpret'
 import { formatHash } from '../../lib/route'
 import { Cite } from '../Cite'
 import { StatusGlyph } from './glyphs'
+import { OutcomeLine } from './OutcomeLine'
 import { RawFields } from './RawFields'
 import { ShowTheMath } from './ShowTheMath'
 
@@ -68,7 +69,7 @@ export function RecordDetails({ row, flow, forensic }: { row: Bass2Row; flow?: C
   const dataset = getSource('psi-25')
   const datasetLink = dataset ? sourceLink(dataset) : null
   const table = APPENDIX_TABLE[row.pi]
-  const outcome = useTestOutcomes()?.outcomes.find((o) => o.testId === row.testId)
+  const outcome = useOutcome(row.testId)
   const replay = replayPresetFor(row.testId)
 
   return (
@@ -123,14 +124,14 @@ export function RecordDetails({ row, flow, forensic }: { row: Bass2Row; flow?: C
             )}
           </p>
         )}
-        {outcome && (
-          <p className="text-sm leading-6">
-            Outcome: {OUTCOME_LABELS[outcome.outcome]}{' '}
-            <span className="text-muted">(AI-read from NASA’s notes, quote checked)</span>
-            {outcome.quote && <span className="block font-serif text-base">“{outcome.quote}”</span>}
-          </p>
-        )}
       </Section>
+
+      {/* Its own section: quarantined tests have notes too, and the sensors' verdict stays apart. */}
+      {outcome && (
+        <Section title="What NASA’s notes say">
+          <OutcomeLine outcome={outcome} />
+        </Section>
+      )}
 
       <Section title="Flow direction">
         <p className="text-sm leading-6">{row.flowConfig ?? 'Not stated'}</p>

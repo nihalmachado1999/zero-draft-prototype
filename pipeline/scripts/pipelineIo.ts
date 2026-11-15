@@ -61,16 +61,30 @@ export interface AskOptions {
   subject: string
   prompt: Prompt
   user: string
-  jsonSchema: Record<string, unknown>
-  /** Tokens the JSON itself may take; llm.ts adds the reasoning allowance for reasoning models. */
+  /** The reply's JSON Schema; without one the reply only has to be JSON (it is checked afterwards). */
+  jsonSchema?: Record<string, unknown>
+  /**
+   * The cap on the reply. Gemini counts its thinking against it, so give it room for the JSON
+   * and the thinking both; for Groq's reasoning models llm.ts adds its own allowance on top.
+   */
   maxOutputTokens: number
   /** Ask again even if a reply is kept (`--fresh`). */
   fresh?: boolean
 }
 
 /**
- * Asks the LLM for JSON at temperature 0 and keeps the raw reply. A rate limit is waited out (up
- * to a minute, four times): the pipeline is in no hurry, unlike Lab Partner's endpoint.
+ * The least time between two calls: a free tier allows only a few requests a minute. Set
+ * PIPELINE_SPACING_MS to change it.
+ */
+const SPACING_MS = Number(process.env.PIPELINE_SPACING_MS ?? 20_000)
+let lastCallAt = 0
+/** How many times this run really asked the LLM (kept replies don't count). */
+export let callsMade = 0
+
+/**
+ * Asks the LLM for JSON at temperature 0 and keeps the raw reply. Calls are spaced out, and a
+ * per-minute rate limit is waited out (up to a minute, twice): the pipeline is in no hurry,
+ * unlike Lab Partner's endpoint. A spent daily allowance stops the script at once.
  */
 export async function ask(options: AskOptions): Promise<RawReply> {
   if (!options.fresh) {
@@ -78,16 +92,20 @@ export async function ask(options: AskOptions): Promise<RawReply> {
     if (kept) return kept
   }
   loadLocalEnv(join(ROOT, '.env.local'))
+  const wait = lastCallAt + SPACING_MS - Date.now()
+  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
+  lastCallAt = Date.now()
+  callsMade++
   const request: CompleteRequest = {
     system: options.prompt.body,
     user: options.user,
     json: true,
-    jsonSchema: options.jsonSchema,
+    ...(options.jsonSchema ? { jsonSchema: options.jsonSchema } : {}),
     maxOutputTokens: options.maxOutputTokens,
     thinkingLevel: 'LOW',
     temperature: 0,
-    timeoutMs: 120_000,
-    rateLimitRetries: 4,
+    timeoutMs: 240_000,
+    rateLimitRetries: 2,
   }
   const result = await complete(request)
   const raw: RawReply = {

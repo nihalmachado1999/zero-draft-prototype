@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Note } from '../components/Note'
 import { CheckedAgainstNasa } from '../components/summarize/CheckedAgainstNasa'
 import { DistributionStrip } from '../components/summarize/DistributionStrip'
+import { Investigations } from '../components/summarize/Investigations'
 import { RecordInconsistencies } from '../components/summarize/RecordInconsistencies'
 import { FilterStrip } from '../components/summarize/FilterStrip'
 import { ENTRY_FLIGHT_DELAY_MS, landedAt } from '../components/summarize/flight'
@@ -31,8 +32,9 @@ import {
   o2Domain,
   wallColumns,
 } from '../lib/testWall'
+import { useOutcomeFindings, useOutcomeKinds } from '../lib/useOutcome'
 
-/** #/summarize : F2 telemetry explorer. Reads ?audit=, ?pi=, ?flow=, ?sample=, ?burn=, ?quarantine=on and ?test=. */
+/** #/summarize : F2 telemetry explorer. Reads ?audit=, ?pi=, ?flow=, ?sample=, ?burn=, ?outcome=, ?quarantine=on and ?test=. */
 export function Summarize({ params }: ViewProps) {
   const data = useAuditData()
   return (
@@ -89,7 +91,9 @@ function Explorer({ bass2, audit, params }: { bass2: Bass2File; audit: AuditFile
     }
   }, [rows])
 
-  const shown = useMemo(() => rows.filter((row) => matchesFilters(row, filters)), [rows, filters])
+  const outcomeKinds = useOutcomeKinds()
+  const findings = useOutcomeFindings(rows)
+  const shown = useMemo(() => rows.filter((row) => matchesFilters(row, filters, outcomeKinds)), [rows, filters, outcomeKinds])
   const matched = useMemo(() => new Set(shown.map((row) => row.testId)), [shown])
 
   // Deep links (#/summarize?test=P22b) and links from the audit bar.
@@ -136,6 +140,7 @@ function Explorer({ bass2, audit, params }: { bass2: Bass2File; audit: AuditFile
           filters={filters}
           shown={shown.length}
           shownBurning={shown.filter((row) => row.burnConfirmed).length}
+          findings={findings}
         />
         <LayoutGroup>
           {/* A container: tiles shrink below a 1300px stage, and below 1100px (the Lab Partner dock
@@ -194,7 +199,7 @@ function Explorer({ bass2, audit, params }: { bass2: Bass2File; audit: AuditFile
           </section>
         </LayoutGroup>
         <div className="shrink-0 border-t border-line px-6 py-3">
-          <FilterStrip filters={filters} pis={wall.pis} domain={wall.domain} />
+          <FilterStrip filters={filters} pis={wall.pis} domain={wall.domain} outcomes={outcomeKinds !== undefined} />
         </div>
       </div>
 
@@ -208,7 +213,8 @@ function Explorer({ bass2, audit, params }: { bass2: Bass2File; audit: AuditFile
           </div>
           <DistributionStrip rows={shown} />
         </section>
-        <CheckedAgainstNasa rows={rows} />
+        <CheckedAgainstNasa rows={rows} findings={findings} />
+        <Investigations />
         <RecordInconsistencies />
       </div>
 

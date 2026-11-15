@@ -9,8 +9,10 @@ import {
 import { summarizeStore } from '../../lib/summarizeStore'
 import {
   FLOW_FILTER_LABELS,
+  OUTCOME_FILTERS,
   type BurnFilter,
   type FlowFilter,
+  type OutcomeFilter,
   type SampleFilter,
   type TestFilters,
 } from '../../lib/testWall'
@@ -25,6 +27,8 @@ type FilterStripProps = {
   filters: TestFilters
   pis: string[]
   domain: { min: number; max: number }
+  /** Whether the AI-read outcomes are loaded: the outcome filter shows only then. */
+  outcomes?: boolean
 }
 
 /** Sample types grouped by family; a family with several types also gets an "All …" option. */
@@ -37,8 +41,16 @@ function sampleGroups() {
   return [...families]
 }
 
-/** The filters under the stage: PI, sample type, flow direction, initial O2 range, burn confirmed. */
-export function FilterStrip({ filters, pis, domain }: FilterStripProps) {
+/** Short names for the outcome filter's options (the tile key spells them out). */
+const OUTCOME_FILTER_LABELS: Record<OutcomeFilter, string> = {
+  sustained: 'Sustained',
+  brief: 'Brief',
+  'no-ignition': 'No ignition',
+  'not-stated': 'Not stated',
+}
+
+/** The filters under the stage: PI, sample type, flow direction, initial O2 range, burn confirmed, and the AI-read outcome. */
+export function FilterStrip({ filters, pis, domain, outcomes = false }: FilterStripProps) {
   const piId = useId()
   const sampleId = useId()
   const o2Id = useId()
@@ -154,6 +166,16 @@ export function FilterStrip({ filters, pis, domain }: FilterStripProps) {
         ]}
         onChange={(burn) => set({ burn: burn === ALL ? null : burn })}
       />
+
+      {/* Only once the outcome reader's file exists: what NASA's notes say, beside what the sensors say. */}
+      {outcomes && (
+        <Segmented<OutcomeFilter | typeof ALL>
+          label="Outcome (AI-read)"
+          value={filters.outcome ?? ALL}
+          options={[{ value: ALL, label: 'All' }, ...OUTCOME_FILTERS.map((outcome) => ({ value: outcome, label: OUTCOME_FILTER_LABELS[outcome] }))]}
+          onChange={(outcome) => set({ outcome: outcome === ALL ? null : outcome })}
+        />
+      )}
     </div>
   )
 }

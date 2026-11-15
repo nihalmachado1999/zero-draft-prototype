@@ -29,7 +29,7 @@ NASA's own BASS record says spacecraft materials are screened with an Earth test
 |---|---|
 | **Audit bar** (every view) | NASA's raw PSI-25 CSV, audited row by row: 129 tests, 122 with usable final oxygen, 7 quarantined (5 physically impossible, 2 missing), 4 with CO above the sensor's range, 18 sensor warnings, 3 date errors. |
 | **Overview: Earth vs Orbit Burn Twin** | Two PMMA rods on one stage. "Drain oxygen" lowers O2 from 17% to 13%: the Earth flame goes out at 15.4%, the orbit flame at its Eq. 6.1 limit for the airflow and rod size you set. |
-| **Summarize** | All 129 tests on a wall, with filters, each record's raw CSV cells, and a quarantine bay. For each impossible O2 value it shows the arithmetic that reproduces it from NASA's Appendix A (e.g. P22b: 19.1 + 20.0 = 39.1). A "Checked against NASA" panel compares our recomputed statistics with the report's, and "Record inconsistencies" lists five places where NASA's PSI investigation records contradict themselves (e.g. Saffire-I's record carries SAME's dates). |
+| **Summarize** | All 129 tests on a wall, with filters, each record's raw CSV cells, and a quarantine bay. Each tile carries what NASA's own note says the flame did (AI-read, quote checked), beside what the sensors confirm, and the two can be filtered and compared. For each impossible O2 value it shows the arithmetic that reproduces it from NASA's Appendix A (e.g. P22b: 19.1 + 20.0 = 39.1). A "Checked against NASA" panel compares our recomputed statistics with the report's, "Investigations" gives an AI summary of each of the eight challenge-named investigations with a footnote on every sentence, and "Record inconsistencies" lists five places where NASA's PSI investigation records contradict themselves (e.g. Saffire-I's record carries SAME's dates). |
 | **Rank** | The Orbital Risk Index of 8 BASS-II sample types (formula below), the flammability map (Eq. 6.1's U-curve), the ignition race (25 s Earth igniter vs. rod response times), and the challenge-named investigations (BASS, BASS-II, Saffire-I/II/III, SAME, FLEX, PSI-62) ranked by relevance to NASA's two lunar lander atmospheres, every cell a checked quote or "Not stated". |
 | **Interpret** | A cabin fire simulator: what a fire does to O2, CO2 and CO in a sealed volume at 1 atm, with alarms at the 10 and 55 ppm CO limits. Presets: replay Test M5, move that fire into the US Lab, a small sealed cabin, N2 dilution, and a 34% O2 lunar lander atmosphere, where it refuses to predict and says why. |
 | **Lab Partner** (dock on every view) | Answers questions, runs the tools that change the views (with Undo), and cites the source of every sentence. |
@@ -106,7 +106,7 @@ No NASA logos or insignia are used anywhere.
 - **Fonts** (SIL Open Font License, via Fontsource): Archivo, Source Serif 4, JetBrains Mono.
 - **Interaction guidelines** adapted from Rauno Freiberg's Web Interface Guidelines, https://interfaces.rauno.me.
 - **Design skill** used while building: `emil-design-eng` by Emil Kowalski (MIT License), in `.claude/skills/`.
-- **LLM APIs**: Groq (`openai/gpt-oss-120b`), with Google Gemini as the fallback.
+- **LLM APIs**: Groq (`openai/gpt-oss-120b`) for Lab Partner, with Google Gemini as the fallback; Google Gemini (`gemini-3.5-flash`) for the offline pipeline (test outcomes, investigation summaries, briefing).
 
 ## Use of AI
 
@@ -114,9 +114,12 @@ No NASA logos or insignia are used anywhere.
 
 - **Code**: Claude Code (Anthropic) wrote the application code, directed and reviewed by the team. Commits it made carry a `Co-Authored-By: Claude` line.
 - **Lab Partner**: an LLM (Groq, `openai/gpt-oss-120b`; Gemini when no Groq key is set) chooses tools and writes the answers. Every answer shows **"AI-written, checked"**.
+- **Test outcomes**: an LLM (Google `gemini-3.5-flash`) read NASA's "Test observations" note for each test in Appendix A of the BASS-II report and said what the flame did (sustained, brief, no ignition, or not stated). A script keeps an outcome only if its quote is in that test's own row. Shown as **"AI-read from NASA's notes, quote checked"**, apart from the sensors' verdict. The notes describe a sustained flame in 102 tests against the 65 the sensors confirm, including 19 of the 25 SIBAL fabric tests whose fires were too small for the sensors.
+- **Investigation summaries**: the same Gemini model summarized each investigation from NASA's own PSI record of it. A script keeps a value or sentence only if its quote is in that record and its numbers are in the quote; the rest is "Not stated" and listed in `pipeline/out/review.md`. Shown as **"AI-written, checked"**.
+- **Dataset briefing**: 4 to 6 sentences written by the same Gemini model from the audit's statistics only. A sentence is kept only if every number in it is in those statistics; `npm test` runs that check. Shown as **"AI-written, numbers checked"**.
 - **Cached answers**: the suggested questions' answers in `src/data/labPartnerCache.json` were written by the same LLM, checked by the server, then reviewed by hand.
 - **How AI output is checked**: the quote check, number check, attribution check and no-orders rule above, plus human review of the cached answers.
-- **Metadata**: every generated JSON file carries `generatedBy`, `model` and `promptVersion` (`model` is null where no LLM was involved). Prompts are in `pipeline/prompts/` with version lines.
+- **Metadata**: every generated JSON file carries `generatedBy`, `model` and `promptVersion` (`model` is null where no LLM was involved). Prompts are in `pipeline/prompts/` with version lines, and every raw LLM reply is kept in `pipeline/out/raw/`.
 - **No AI images or video.** The flames are drawings rendered in code and labelled "Illustration". The demo video is a screen recording of the app.
 
 ## Run it
@@ -145,6 +148,7 @@ npm run dev
 | `npm run check:claims` | confirm every quote is on its stated page or line |
 | `npm run llm:smoke` | check the LLM key works: prints `ok` |
 | `npm run lab:ask -- "question"` | ask Lab Partner from the terminal |
+| `npm run pipeline:outcomes`, `pipeline:extract`, `pipeline:verify`, `pipeline:briefing` | re-run the AI pipeline (reuses the kept replies; `-- --fresh` asks again) |
 
 ## Deploy on Vercel
 
@@ -162,4 +166,6 @@ npm run dev
 - **Eq. 6.1 source**: the PDF's text layer garbles the equation, so it can't be a checked quote. The drawer shows it as printed (report p. 75), and `check:claims` confirms its four coefficients are on that page in that order; a test confirms they are the ones the model uses.
 - **Cached answers**: all six suggested questions are cached (Groq, `openai/gpt-oss-120b`), each read against its sources. The 39% answer says "the initial O2 reading was blank" where the uncalibrated initial reading was; its citation chip opens the exact Appendix A row.
 - **Narrow screens**: at 1280 px wide with the Lab Partner dock open, the Burn Twin's labels crowd. The demo size is 1440 × 900. Below 1024 px (a phone) the app says it needs a wider screen, with a button to show it anyway.
-- **Investigation index**: built from verified quotes of the PSI records, not from the AI extraction pipeline the plan describes (`pipeline:text`, `extract`, `verify`, `briefing` and the test-outcome reader are not built). SAME-R has no record in our sources. No ISS cabin atmosphere is quoted in our sources, so relevance is scored against the lunar atmospheres only.
+- **Investigation index**: the relevance ranking on Rank is built from quotes we checked by hand-written claims, not from the AI summaries. SAME-R has no record in our sources. No ISS cabin atmosphere is quoted in our sources, so relevance is scored against the lunar atmospheres only.
+- **AI-read outcomes**: the reader judges each test from NASA's one-line note, so a terse note can be read differently by a different model or prompt. Every outcome shows the quote it rests on. 9 of 129 read "Not stated": 3 tests aren't in Appendix A and 6 notes don't describe the flame. A flame the crew put out by changing the airflow counts as sustained, however soon it went out: it was burning until then.
+- **AI summaries**: 2 of 48 extracted fields failed the quote check and read "Not stated" (`pipeline/out/review.md`).

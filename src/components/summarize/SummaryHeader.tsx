@@ -1,8 +1,9 @@
-import { X } from 'lucide-react'
+import { CircleCheck, X } from 'lucide-react'
 import { useId, useState } from 'react'
 import { auditHeadline, type AuditFile } from '../../lib/audit'
 import { getClaim } from '../../lib/claims'
 import { useBriefing } from '../../lib/generatedData'
+import type { OutcomeFindings } from '../../lib/outcomes'
 import { summarizeStore } from '../../lib/summarizeStore'
 import { AUDIT_FILTER_LABELS, hasFilters, type TestFilters } from '../../lib/testWall'
 import { AnimatedNumber } from '../AnimatedNumber'
@@ -17,6 +18,8 @@ type SummaryHeaderProps = {
   filters: TestFilters
   shown: number
   shownBurning: number
+  /** What the outcome reader found; undefined until its file exists and has loaded. */
+  findings?: OutcomeFindings
 }
 
 /**
@@ -24,7 +27,7 @@ type SummaryHeaderProps = {
  * alone (it stands even if the AI briefing never ships), then what the filters show. The AI
  * briefing's toggle appears only once the pipeline has written it.
  */
-export function SummaryHeader({ audit, filters, shown, shownBurning }: SummaryHeaderProps) {
+export function SummaryHeader({ audit, filters, shown, shownBurning, findings }: SummaryHeaderProps) {
   const headline = auditHeadline(audit)
   const [briefingOpen, setBriefingOpen] = useState(false)
   const briefingId = useId()
@@ -57,6 +60,18 @@ export function SummaryHeader({ audit, filters, shown, shownBurning }: SummaryHe
           </>
         )}
       </p>
+      {findings && (
+        <p className="max-w-[80rem] text-sm leading-6 text-ink">
+          Sensors confirm <span className="tabular-nums">{findings.burnConfirmed}</span> burns. NASA’s notes, read by AI
+          with every quote checked, describe a sustained flame in <span className="tabular-nums">{findings.sustained}</span>{' '}
+          tests, including <span className="tabular-nums">{findings.tooSmallSustained}</span> of the{' '}
+          <span className="tabular-nums">{findings.tooSmall}</span> SIBAL tests too small for the sensors.{' '}
+          <span className="ml-1 inline-flex items-center gap-1 align-baseline text-xs text-emerald">
+            <CircleCheck aria-hidden="true" className="size-3.5" />
+            AI-read from NASA’s notes, quote checked
+          </span>
+        </p>
+      )}
       <div className="flex h-6 items-center gap-4 text-sm whitespace-nowrap">
         <p className="text-muted">
           Showing <AnimatedNumber value={shown} className="text-ink" /> of{' '}

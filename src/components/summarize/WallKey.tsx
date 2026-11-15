@@ -12,14 +12,16 @@ import {
   type Severity,
 } from '../../lib/audit'
 import { citePreview, getClaim, testNoteClaimIds } from '../../lib/claims'
-import { OUTCOME_LABELS, useTestOutcomes } from '../../lib/generatedData'
+import { OUTCOME_LABELS, useTestOutcomes, type Outcome } from '../../lib/generatedData'
+import { useOutcome } from '../../lib/useOutcome'
 import { o2FillColor } from '../../lib/testWall'
 import { useCitation } from '../citationContext'
-import { FlowGlyph, StatusGlyph } from './glyphs'
+import { FlowGlyph, OutcomeGlyph, StatusGlyph } from './glyphs'
 import { useWallHover } from './wallHover'
 
 const SWATCHES = 5
 const FLOWS: (FlowConfig | null)[] = ['Opposed', 'Concurrent', 'Stagnation', null]
+const OUTCOME_ORDER: Outcome[] = ['sustained', 'brief', 'no-ignition', 'not-stated']
 const STATUSES: { severity: Severity; label: string }[] = [
   { severity: 'quarantined', label: 'Quarantined' },
   { severity: 'co-over-range', label: 'CO over range' },
@@ -58,7 +60,17 @@ export function WallLegend({ domain }: { domain: { min: number; max: number } })
           </span>
         ))}
       </span>
-      {outcomes && <span>Outcomes: AI-read from NASA’s notes, quote checked</span>}
+      {outcomes && (
+        <span className="flex items-center gap-3">
+          {OUTCOME_ORDER.map((outcome) => (
+            <span key={outcome} className="flex items-center gap-1.5">
+              <OutcomeGlyph outcome={outcome} className="text-ink/80" />
+              {OUTCOME_LABELS[outcome]}
+            </span>
+          ))}
+          <span>(AI-read from NASA’s notes, quote checked)</span>
+        </span>
+      )}
     </div>
   )
 }
@@ -96,12 +108,11 @@ type TestBriefProps = {
 export function TestBrief({ byId, defaultId, defaultCaption }: TestBriefProps) {
   const hovered = useWallHover()
   const { openCitation } = useCitation()
-  const outcomes = useTestOutcomes()
   const row = (hovered ? byId.get(hovered) : undefined) ?? (defaultId ? byId.get(defaultId) : undefined)
+  const outcome = useOutcome(row?.testId ?? '')
   if (!row) return <div className="h-[8.25rem]" />
 
   const isDefault = !hovered || !byId.has(hovered)
-  const outcome = outcomes?.outcomes.find((o) => o.testId === row.testId)
   const flags = row.flags.filter((flag) => !flag.startsWith('note-'))
   const noteId = testNoteClaimIds(row.testId)[0]
   const note = noteId ? getClaim(noteId) : undefined
@@ -137,19 +148,29 @@ export function TestBrief({ byId, defaultId, defaultCaption }: TestBriefProps) {
           {row.flowConfig ?? 'Flow not stated'}
         </span>
         <span className="truncate text-muted">{BURN_STATUS_LABELS[burnStatus(row)]}</span>
-        {outcome && (
-          <span className="truncate">
-            Outcome: {OUTCOME_LABELS[outcome.outcome]} <span className="text-muted">(AI-read, quote checked)</span>
-          </span>
-        )}
       </p>
       <p className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
+        {/* The notes' outcome leads this line; the sensors' verdict stays on the line above. A
+            test with no outcome shows the reason after the "not stated" mark: the strip is narrow. */}
+        {outcome && (
+          <span className="mr-2.5 flex shrink-0 items-center gap-1.5">
+            <OutcomeGlyph outcome={outcome.outcome} className="shrink-0 text-ink/80" />
+            {outcome.reason ? (
+              <span className="text-muted">
+                <span className="sr-only">Outcome not stated: </span>
+                {outcome.reason}
+              </span>
+            ) : (
+              <span>Outcome: {OUTCOME_LABELS[outcome.outcome]}</span>
+            )}
+          </span>
+        )}
         {flags.length === 0 ? (
           <span className="text-muted">No flags</span>
         ) : (
           <>
             <StatusGlyph severity={severityOf(row.flags)} className="shrink-0" />
-            <span className="truncate">{FLAG_LABELS[flags[0]]}</span>
+            <span className="min-w-16 truncate">{FLAG_LABELS[flags[0]]}</span>
             {flags.length > 1 && (
               <span className="shrink-0 text-muted">
                 and <span className="tabular-nums">{flags.length - 1}</span> more

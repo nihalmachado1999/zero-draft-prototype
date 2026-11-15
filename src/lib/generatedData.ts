@@ -1,10 +1,11 @@
-// The AI pipeline's outputs (M7): the dataset briefing (F2) and the test-outcome reader (F2b).
-// Until the pipeline writes them, they don't exist, and every place that shows them renders
-// nothing. vite.config.ts records which files exist when the app is built (or the dev server
+// The AI pipeline's outputs (M7): the dataset briefing (F2), the test-outcome reader (F2b) and
+// the investigation summaries (F7). Until the pipeline writes them, they don't exist, and every
+// place that shows them renders nothing. vite.config.ts records which files exist when the app is built (or the dev server
 // starts), so the app never asks for a missing file and never logs a 404.
 import { useSyncExternalStore } from 'react'
+import type { FieldFailure, InvestigationSummary } from './investigationVerify'
 
-declare const __GENERATED_DATA__: { briefing: boolean; testOutcomes: boolean }
+declare const __GENERATED_DATA__: { briefing: boolean; testOutcomes: boolean; investigations: boolean }
 
 /** public/data/briefing.json (SPEC §6 BriefingFile). */
 export interface BriefingFile {
@@ -39,6 +40,26 @@ export interface TestOutcomesFile {
   model: string
   promptVersion: string
   outcomes: TestOutcome[]
+}
+
+/** public/data/investigations.json: the AI summaries of the indexed investigations, checked by verify.ts. */
+export interface InvestigationsFile {
+  generatedBy: string
+  generatedAt: string
+  model: string
+  promptVersion: string
+  investigations: InvestigationSummary[]
+  /** Fields and sentences that failed a check: null or left out above, listed in pipeline/out/review.md. */
+  failures: Pick<FieldFailure, 'id' | 'field' | 'reason'>[]
+}
+
+function isInvestigations(value: unknown): value is InvestigationsFile {
+  const v = value as InvestigationsFile
+  return (
+    typeof v?.model === 'string' &&
+    Array.isArray(v.investigations) &&
+    v.investigations.every((i) => typeof i?.id === 'string' && Array.isArray(i.summary))
+  )
 }
 
 function isBriefing(value: unknown): value is BriefingFile {
@@ -84,3 +105,6 @@ export const useBriefing = optionalJson(__GENERATED_DATA__.briefing, 'data/brief
 
 /** The AI-read test outcomes, or null when they haven't been generated. */
 export const useTestOutcomes = optionalJson(__GENERATED_DATA__.testOutcomes, 'data/test-outcomes.json', isTestOutcomes)
+
+/** The AI summaries of the indexed investigations, or null when they haven't been generated. */
+export const useInvestigationSummaries = optionalJson(__GENERATED_DATA__.investigations, 'data/investigations.json', isInvestigations)

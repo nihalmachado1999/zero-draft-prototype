@@ -8,7 +8,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from 'react'
-import { citePreview, getClaim } from '../lib/claims'
+import { citePreview, getClaim, type Claim } from '../lib/claims'
 import { useCitation } from './citationContext'
 import { FootnotePreview } from './FootnotePreview'
 import { useFootnoteNumber } from './footnoteContext'
@@ -16,6 +16,11 @@ import { useFootnoteNumber } from './footnoteContext'
 type CiteProps = {
   /** A claim id from src/data/claims.json. check:claims fails if it is missing. */
   id: string
+  /**
+   * A checked quote that isn't in claims.json: one the AI pipeline chose and verify.ts found in
+   * its source (public/data/investigations.json). `id` then only numbers the footnote.
+   */
+  claim?: Claim
   /** Only the citation drawer sets this, to link inputs that may not be verified. */
   showUnverified?: boolean
   /**
@@ -41,9 +46,9 @@ let lastClosedAt = -Infinity
  * source; a click opens the citation drawer.
  * Unverified or unknown claims render nothing outside the drawer (CLAUDE.md rule 3).
  */
-export function Cite({ id, showUnverified = false, area }: CiteProps) {
+export function Cite({ id, claim: given, showUnverified = false, area }: CiteProps) {
   const { openCitation } = useCitation()
-  const claim = getClaim(id)
+  const claim = given ?? getClaim(id)
   const shown = claim !== undefined && (claim.verified || showUnverified)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const number = useFootnoteNumber(shown ? id : null, buttonRef)
@@ -77,7 +82,7 @@ export function Cite({ id, showUnverified = false, area }: CiteProps) {
         type="button"
         onClick={() => {
           preview.hide(true)
-          openCitation(id)
+          openCitation(given ?? id)
         }}
         onPointerEnter={onPointerEnter}
         onPointerLeave={() => preview.hide(false)}

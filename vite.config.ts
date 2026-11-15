@@ -55,6 +55,7 @@ export default defineConfig({
     __GENERATED_DATA__: JSON.stringify({
       briefing: generated('briefing.json'),
       testOutcomes: generated('test-outcomes.json'),
+      investigations: generated('investigations.json'),
     }),
   },
 })

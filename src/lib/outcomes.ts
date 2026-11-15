@@ -6,6 +6,7 @@
 //   reads labelled rows, so it can't give one test's note to its neighbour.
 // - A quote is kept only if it is at most 15 words and found, after normalize(), in its own
 //   test's row: on that page, after that test's id. Anything else becomes "not-stated".
+import { burnStatus, type Bass2Row } from './audit'
 import type { Outcome, TestOutcome } from './generatedData'
 import { normalize } from './normalize'
 
@@ -46,6 +47,33 @@ export function splitRows(pageText: string, testIds: readonly string[]): Appendi
     start,
     text: pageText.slice(start, starts[i + 1]?.start ?? pageText.length).trim(),
   }))
+}
+
+/** A sensor reading as Appendix A prints it: a number, dashes for a blank, or an over-range mark. */
+const READING = /^(?:[-+]?\d+(?:\.\d+)?|-{2,}|\+?OR|Over|>\d[\d,]*)$/
+/** Each row ends its readings with eight in a row: four O2, two CO2, two CO. */
+const READINGS_RUN = 8
+/** The footnotes under a table open with this one. */
+const FOOTNOTES = /\s[a-z]?Greenwich Mean Time\..*$/
+
+/**
+ * A row's "Test observations" notes: what follows its last run of eight or more sensor readings.
+ * The model is given only this, so it reads the notes and not thirty settings (and the input is
+ * half the size). The dates that open the next row may trail it. If a row has no such run, the
+ * whole row is returned: nothing is ever cut on a guess. Quotes are still checked against the row.
+ */
+export function notesOf(row: AppendixRow): string {
+  const text = row.text.replace(FOOTNOTES, '')
+  const tokens = [...text.matchAll(/\S+/g)]
+  let run = 0
+  let notesStart = -1
+  for (const token of tokens) {
+    if (READING.test(token[0])) {
+      run++
+      if (run >= READINGS_RUN) notesStart = token.index + token[0].length
+    } else run = 0
+  }
+  return notesStart === -1 ? text : text.slice(notesStart).trim()
 }
 
 /** What the model returns for one test (pipeline/prompts/read-outcomes.md). */
@@ -114,4 +142,76 @@ export function assembleOutcomes(testIds: readonly string[], checked: readonly T
   const byId = new Map<string, TestOutcome>()
   for (const outcome of checked) if (!byId.has(outcome.testId)) byId.set(outcome.testId, outcome)
   return testIds.map((testId) => byId.get(testId) ?? { testId, outcome: 'not-stated', quote: null })
+}
+
+// What the views show for a test's outcome. The file holds only the outcome and its quote (SPEC
+// §6); where the row is, and whether there is one, comes from the flow evidence in bass2.json,
+// which was found on the same Appendix A pages.
+
+/** Why a test's outcome is "not stated". */
+export const NOT_STATED_REASONS = {
+  'no-row': 'Not in Appendix A',
+  'no-flame-note': 'NASA’s note doesn’t describe the flame',
+} as const
+
+/** Where a test's row is in Appendix A; a null page means it has no row there. */
+export interface AppendixPlace {
+  pdfPage: number | null
+  reportPage: number | null
+}
+
+export interface OutcomeView {
+  outcome: Outcome
+  /** NASA's words, checked in the test's own row; null when not stated. */
+  quote: string | null
+  /** For "not-stated" only: which of the two reasons applies. */
+  reason: string | null
+  /** The quote's page, when there is a quote. */
+  place: AppendixPlace | null
+}
+
+/** A test's outcome as shown: with the reason it isn't stated, or the page its quote is on. */
+export function outcomeView(outcome: TestOutcome, place: AppendixPlace | undefined): OutcomeView {
+  const inAppendix = typeof place?.pdfPage === 'number'
+  if (outcome.outcome === 'not-stated' || !outcome.quote) {
+    return {
+      outcome: 'not-stated',
+      quote: null,
+      reason: inAppendix ? NOT_STATED_REASONS['no-flame-note'] : NOT_STATED_REASONS['no-row'],
+      place: null,
+    }
+  }
+  return { outcome: outcome.outcome, quote: outcome.quote, reason: null, place: inAppendix ? (place ?? null) : null }
+}
+
+// What the reader found, set beside the sensors (SPEC F2b). Every number is counted here from
+// bass2.json's rows and test-outcomes.json's outcomes; nothing is typed in.
+
+export interface OutcomeFindings {
+  /** Tests the sensors confirm burned (CO2 rose at least 0.2 %). */
+  burnConfirmed: number
+  /** Tests whose notes describe a sustained flame. */
+  sustained: number
+  /** Tests the app calls "Fire too small for the sensors": SIBAL fabric, readings usable, no burn confirmed. */
+  tooSmall: number
+  /** How many of those the notes describe as a sustained flame. */
+  tooSmallSustained: number
+  /** Sensors confirm a burn, but the notes say brief ignition or no ignition. Test ids, in CSV order. */
+  sensorsYesNotesNo: string[]
+  /** The notes say a sustained flame, but the sensors don't confirm a burn (too small, not confirmed, or unusable). */
+  notesYesSensorsNo: string[]
+}
+
+export function outcomeFindings(rows: readonly Bass2Row[], outcomes: readonly TestOutcome[]): OutcomeFindings {
+  const byId = new Map(outcomes.map((outcome) => [outcome.testId, outcome.outcome]))
+  const of = (row: Bass2Row) => byId.get(row.testId) ?? 'not-stated'
+  const tooSmall = rows.filter((row) => burnStatus(row) === 'too-small')
+  return {
+    burnConfirmed: rows.filter((row) => row.burnConfirmed).length,
+    sustained: rows.filter((row) => of(row) === 'sustained').length,
+    tooSmall: tooSmall.length,
+    tooSmallSustained: tooSmall.filter((row) => of(row) === 'sustained').length,
+    sensorsYesNotesNo: rows.filter((row) => row.burnConfirmed && (of(row) === 'brief' || of(row) === 'no-ignition')).map((row) => row.testId),
+    notesYesSensorsNo: rows.filter((row) => !row.burnConfirmed && of(row) === 'sustained').map((row) => row.testId),
+  }
 }
