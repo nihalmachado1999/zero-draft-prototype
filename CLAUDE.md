@@ -35,7 +35,12 @@ The full plan is `docs/SPEC.md`. Before writing code for a milestone, read that 
 - `npm run lab:ask -- "question"`: asks Lab Partner one question from the terminal and prints every tool, checked sentence and dropped sentence. `LAB_VERBOSE=1` also prints Gemini's raw replies
 - `npm run lab:cache` (or `-- m5 lunar` for some): regenerates the suggested questions' cached answers in `src/data/labPartnerCache.json`. Read every answer against its sources before committing
 - `npm run data:bass2`: rebuilds `public/data/bass2.json` and `audit.json` from the raw CSV
-- `npm run pipeline:text`, `pipeline:extract`, `pipeline:verify`, `pipeline:briefing`, `pipeline:chunks`: the AI pipeline (SPEC §7)
+- The AI pipeline (SPEC §7). Each LLM script reuses the replies kept in `pipeline/out/raw/`; add `-- --fresh` to ask again. Read every generated sentence against its source before committing
+  - `npm run pipeline:text`: sources to `pipeline/text/<ID>.pages.json` (no LLM)
+  - `npm run pipeline:outcomes`: reads NASA's notes on each test into `public/data/test-outcomes.json`
+  - `npm run pipeline:extract`, then `npm run pipeline:verify`: the investigation summaries, checked into `public/data/investigations.json`, with failures in `pipeline/out/review.md`
+  - `npm run pipeline:briefing`: the dataset briefing, `public/data/briefing.json`
+  - `npm run pipeline:chunks`: Lab Partner's search chunks (no LLM)
 
 ## Folder layout
 
@@ -50,7 +55,7 @@ pipeline/
   prompts/                   LLM prompts. Changing one means bumping its version line.
   out/raw/                   untouched LLM responses. Keep them; they're our evidence.
   out/review.md              fields that failed verification, for human review
-  scripts/                   compile-bass2.ts, check-claims.ts, llm.ts, text.ts, extract.ts, verify.ts, outcomes.ts, briefing.ts, chunks.ts, lab-ask.ts, lab-cache.ts
+  scripts/                   compile-bass2.ts, check-claims.ts, llm.ts, pipelineIo.ts, text.ts, extract.ts, verify.ts, outcomes.ts, briefing.ts, chunks.ts, lab-ask.ts, lab-cache.ts
 docs/fixtures/               expected values from the verified audit. Tests must reproduce them; never edit them to make a test pass.
 public/data/                 JSON the site loads. Generated, never hand-edited.
 public/img/                  NASA figures we extracted, credited in sources.json
@@ -63,6 +68,10 @@ src/
   lib/risk.ts                Orbital Risk Index. Pure, fully tested.
   lib/investigations.ts      the investigation index: what each PSI investigation tested, each fact on a verified claim. Pure.
   lib/relevance.ts           investigation relevance scoring (P1). Pure, fully tested.
+  lib/outcomes.ts            the outcome reader's checks: splits Appendix A into rows, keeps a quote only if it is in its test's row. Pure, fully tested. lib/useOutcome.ts is the React hook.
+  lib/investigationVerify.ts verify.ts's checks on the AI's investigation summaries. Pure, fully tested.
+  lib/briefing.ts            the dataset briefing's stats and its number check. Pure, fully tested.
+  lib/generatedData.ts       loads the AI pipeline's files (briefing, test outcomes, investigation summaries); each renders nothing when its file is missing
   lib/burnTwin.ts            Burn Twin state: which flame is lit, where each went out, the drain. Pure, fully tested. lib/burnStore.ts is its store and React hook.
   lib/twinLayout.ts          where things sit on the Burn Twin stage. Pure, tested.
   draw/                      canvas drawing for the stage: flames, rod, airflow, smoke, bloom. Illustration only. M5 reuses the orbit flame.

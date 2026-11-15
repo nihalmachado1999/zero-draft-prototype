@@ -61,7 +61,8 @@ export interface AskOptions {
   subject: string
   prompt: Prompt
   user: string
-  jsonSchema: Record<string, unknown>
+  /** The reply's JSON Schema; without one the reply only has to be JSON (it is checked afterwards). */
+  jsonSchema?: Record<string, unknown>
   /** Tokens the JSON itself may take; llm.ts adds the reasoning allowance for reasoning models. */
   maxOutputTokens: number
   /** Ask again even if a reply is kept (`--fresh`). */
@@ -82,7 +83,7 @@ export async function ask(options: AskOptions): Promise<RawReply> {
     system: options.prompt.body,
     user: options.user,
     json: true,
-    jsonSchema: options.jsonSchema,
+    ...(options.jsonSchema ? { jsonSchema: options.jsonSchema } : {}),
     maxOutputTokens: options.maxOutputTokens,
     thinkingLevel: 'LOW',
     temperature: 0,

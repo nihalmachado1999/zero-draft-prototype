@@ -1,4 +1,4 @@
-promptVersion: extract-investigation@1
+promptVersion: extract-investigation@2
 
 # Your job
 
@@ -6,7 +6,7 @@ You extract facts about ONE NASA combustion investigation from the source text y
 
 # Input
 
-Pages of source text. Each page starts with a label like `[i_Investigation.txt p.1]` or `[BASS-II_Summary_Report.pdf p.83]`. PSI metadata files are tab-separated "key, value" lines, for example `Comment[Flight Platform]	International Space Station (ISS)`. Many keys are blank. A blank key means the value is not stated.
+The investigation's id, then pages of source text. Each page starts with a label like `[i_Investigation.txt p.1]` or `[BASS-II Summary Report.pdf p.9]`. PSI metadata files are tab-separated "key, value" lines, for example `Comment[Flight Platform]	International Space Station (ISS)`. Lines with no value have been left out: a key you don't see is not stated.
 
 # Output
 
@@ -22,51 +22,30 @@ The full object:
 
 ```
 {
-  "id": "<PSI study identifier, e.g. PSI-25, copied from the text>",
-  "acronym": <Field: string>,
+  "id": "<the investigation id you were given>",
+  "acronym": <Field: string>,                      // e.g. "BASS", "SAFFIRE-I"
   "title": <Field: string>,
-  "doi": <Field: string>,
-  "platform": <Field: string>,                     // e.g. "International Space Station (ISS)", "drop tower", "Cygnus"
-  "gravity": <Field: "micro" | "partial" | "normal" | "mixed">,
-  "years": <Field: { "start": "YYYY-MM-DD or YYYY", "end": "YYYY-MM-DD or YYYY" }>,
+  "platform": <Field: string>,                     // where it ran, e.g. "International Space Station (ISS)"
   "o2Range": <Field: { "min": number, "max": number, "unit": "% by volume" }>,
   "pressureRange": <Field: { "min": number, "max": number, "unit": "atm" | "psia" | "kPa" }>,
   "flowRange": <Field: { "min": number, "max": number, "unit": "cm/s" | "mm/s" }>,
-  "materials": <Field: string[]>,
-  "realCabinMaterials": <Field: boolean>,
-  "phenomena": <Field: Array<"ignition" | "flame-spread" | "extinction" | "suppression" | "detection">>,
-  "hasTestLevelData": <Field: boolean>,
-  "summary": { "text": "<2 or 3 plain sentences>", "evidence": [ ...quotes... ] },
-  "findings": [ { "text": "<one sentence>", "evidence": [ ...quotes... ] } ]
+  "summary": [ { "text": "<one plain sentence>", "evidence": [ ...quotes... ] } ]
 }
 ```
 
 # Rules
 
-1. **Quotes are exact.** Copy them character for character: same words, numbers, symbols and punctuation. Don't fix typos, expand abbreviations or join text from two pages. Aim for 8 to 40 words per quote.
-2. **Every number needs a quote.** Each number in a value must appear, written the same way, inside one of that field's quotes. If the text says "1 atm", the value is `{ "min": 1, "max": 1, "unit": "atm" }`. Don't convert units; the verify script does that.
-3. **Unknown means null.** If the text doesn't state something, return `{ "value": null, "evidence": [] }`. Don't infer from general knowledge, from the investigation's name, or from other investigations. "Not stated" is a correct and useful answer.
-4. **Ranges.** Use the lowest and highest values the text states for actual tests. A single stated value v becomes `{ "min": v, "max": v }`. Use planned or design limits only if the text gives no tested values, and then say so in the quote.
-5. **Gravity.**
-   - Use "micro" for orbit (ISS, Cygnus, free flyers), drop towers and parabolic microgravity.
-   - Use "partial" for lunar or Martian gravity.
-   - Use "normal" for 1g ground tests.
-   - Use "mixed" if the text describes more than one of these.
-   - Only use a class if the text names the platform or the gravity level.
-6. **Phenomena.** Include one only if the text describes studying it:
-   - ignition: getting a sample to light
-   - flame-spread: how a flame moves along a material
-   - extinction: what puts flames out, including flammability limits
-   - suppression: an extinguishing agent or method
-   - detection: smoke or fire sensing
-7. **Materials** are named as the text names them.
-   - `realCabinMaterials` is true only if a named material is a fabric, Nomex, wire insulation, foam or a spacecraft part.
-   - It is false if every named material is a model fuel: PMMA (acrylic), wax, gaseous fuels, liquid droplets.
-   - It is null if no materials are named.
-8. **hasTestLevelData** is true only if the text says per-test data tables or data files are provided. Otherwise null.
-9. **Summary.** 2 or 3 sentences a curious 16-year-old could follow. Every sentence must be backed by a quote in `summary.evidence`. No adjectives the text doesn't support ("groundbreaking", "critical").
-10. **Findings.** Up to 5 results: what was found, not what was planned. Objectives, hypotheses and "this research will…" statements are not findings. If no results are stated, return `"findings": []`.
-11. **Stay in your lane.** Don't mention other investigations unless this text does. Don't give safety advice.
+1. **Quotes are exact.** Copy them character for character: same words, numbers, symbols and punctuation. Don't fix typos, expand abbreviations or join text from two places. Aim for 6 to 40 words per quote. A quote of a metadata line is its value, without the key.
+2. **Text values are copied.** `acronym`, `title` and `platform` must appear, word for word, inside one of that field's quotes.
+3. **Every number needs a quote.** Each number in a value must appear, written the same way, inside one of that field's quotes. If the text says "1 atm", the value is `{ "min": 1, "max": 1, "unit": "atm" }`. Don't convert units; a script does that.
+4. **Unknown means null.** If the text doesn't state something, return `{ "value": null, "evidence": [] }`. Don't infer from general knowledge, from the investigation's name, or from other investigations. "Not stated" is a correct and useful answer.
+5. **Ranges.** Use the lowest and highest values the text states for the tests. A single stated value v becomes `{ "min": v, "max": v }`. Use planned or design limits only if the text gives no tested values.
+   - `o2Range` is the oxygen concentration of the test atmosphere, in percent.
+   - `pressureRange` is the pressure the tests ran at.
+   - `flowRange` is the speed of the air or gas flow over the sample.
+6. **Platform.** Prefer the text's own description of where the experiment ran over a bare field value, when the two differ.
+7. **Summary.** 2 or 3 sentences a curious 16-year-old could follow: what was burned or studied, where, and why. Each sentence is its own entry with its own quote or quotes, and says only what its quotes say. Any number in a sentence must be in that sentence's quotes. No adjectives the text doesn't support ("groundbreaking", "critical").
+8. **Stay in your lane.** Don't mention other investigations unless this text does. Don't give safety advice. Describe what was planned or done, not results the text doesn't state.
 
 # Example of one field
 
@@ -76,8 +55,8 @@ Page text contains `Comment[Flight Platform]	International Space Station (ISS)`:
 "platform": { "value": "International Space Station (ISS)", "evidence": [ { "file": "i_Investigation.txt", "page": 1, "quote": "International Space Station (ISS)" } ] }
 ```
 
-Page text contains `Comment[Flight Platform]` followed by nothing:
+The text gives no test pressure:
 
 ```
-"platform": { "value": null, "evidence": [] }
+"pressureRange": { "value": null, "evidence": [] }
 ```

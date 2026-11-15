@@ -1,8 +1,8 @@
 {
  "generatedBy": "pipeline/scripts/outcomes.ts",
- "generatedAt": "2026-11-14T18:43:19.557Z",
+ "generatedAt": "2026-11-15T03:22:50.012Z",
  "model": "openai/gpt-oss-120b",
- "promptVersion": "read-outcomes@1",
+ "promptVersion": "read-outcomes@4",
  "outcomes": [
   {
    "testId": "B1",
@@ -42,12 +42,12 @@
   {
    "testId": "B8",
    "outcome": "sustained",
-   "quote": "Spread at 10 cm/s"
+   "quote": "Spread at 10 cm/s, did not blowoff"
   },
   {
    "testId": "B9",
    "outcome": "sustained",
-   "quote": "Steady burning at 2 cm/s"
+   "quote": "Steady burning at 2 cm/s, extinguished at 0.35"
   },
   {
    "testId": "B10",
@@ -91,12 +91,12 @@
   },
   {
    "testId": "B18",
-   "outcome": "brief",
+   "outcome": "sustained",
    "quote": "flame blew out at a fan pot of 7.0"
   },
   {
    "testId": "B19",
-   "outcome": "brief",
+   "outcome": "sustained",
    "quote": "flame blew out at a pot of 6.0"
   },
   {
@@ -107,7 +107,7 @@
   {
    "testId": "B21",
    "outcome": "sustained",
-   "quote": "spreads halfway"
+   "quote": "flame goes out at 0.355 pot setting"
   },
   {
    "testId": "B22",
@@ -121,7 +121,7 @@
   },
   {
    "testId": "F2",
-   "outcome": "no-ignition",
+   "outcome": "brief",
    "quote": "Tried to ignite, flame would not sustain"
   },
   {
@@ -132,7 +132,7 @@
   {
    "testId": "F4",
    "outcome": "sustained",
-   "quote": "blue flame established at 3 cm/s"
+   "quote": "blue flame established at 3 cm/s, reduced flow in increments"
   },
   {
    "testId": "M1",
@@ -141,8 +141,8 @@
   },
   {
    "testId": "M2",
-   "outcome": "not-stated",
-   "quote": null
+   "outcome": "sustained",
+   "quote": "Ignite at 20 cm/s, turn down to 15 cm/s after spread away from igniter"
   },
   {
    "testId": "M3",
@@ -151,13 +151,13 @@
   },
   {
    "testId": "M4",
-   "outcome": "not-stated",
-   "quote": null
+   "outcome": "sustained",
+   "quote": "Mild ignition at 10 cm/s; decreased flow down holding constant"
   },
   {
    "testId": "M5",
    "outcome": "sustained",
-   "quote": "flame already burning ~1/3 of sample"
+   "quote": "flame already burning ~1/3 of sample, both sides, long and sooty"
   },
   {
    "testId": "M6",
@@ -167,7 +167,7 @@
   {
    "testId": "M7",
    "outcome": "sustained",
-   "quote": "18 min burn; burned entire sample"
+   "quote": "min burn; burned entire sample"
   },
   {
    "testId": "M8",
@@ -177,7 +177,7 @@
   {
    "testId": "M9",
    "outcome": "sustained",
-   "quote": "17-min burn"
+   "quote": "Ignited at 10 cm/s, photographs every 5 s or so"
   },
   {
    "testId": "M10",
@@ -197,7 +197,7 @@
   {
    "testId": "M13",
    "outcome": "sustained",
-   "quote": "Mild ignition at 10 cm/s"
+   "quote": "Mild ignition at 10 cm/s;"
   },
   {
    "testId": "M14",
@@ -207,12 +207,12 @@
   {
    "testId": "M15",
    "outcome": "sustained",
-   "quote": "Ignited and turned flow down to control flame size"
+   "quote": "Ignited and turned flow down to control flame size during end burning"
   },
   {
    "testId": "M16",
    "outcome": "sustained",
-   "quote": "Burned at decreasing flow down to 1 cm/s"
+   "quote": "Burned at decreasing flow down to 1 cm/s or so, still fine"
   },
   {
    "testId": "M17",
@@ -227,22 +227,22 @@
   {
    "testId": "M19",
    "outcome": "sustained",
-   "quote": "Burned with decreasing flows until it went out on its own at 5 cm/s"
+   "quote": "Burned with decreasing flows until it went out on its own"
   },
   {
    "testId": "M20",
    "outcome": "sustained",
-   "quote": "flame out after 3 more minutes"
+   "quote": "Flame took some time to establish, initially only on bottom of fuel"
   },
   {
    "testId": "O1",
    "outcome": "sustained",
-   "quote": "very sooty long flame"
+   "quote": "very sooty long flame at high flows"
   },
   {
    "testId": "O2",
    "outcome": "sustained",
-   "quote": "Ignited at 2 cm/s"
+   "quote": "Ignited at 2 cm/s, and got dim flame"
   },
   {
    "testId": "O3a",
@@ -251,8 +251,8 @@
   },
   {
    "testId": "O3b",
-   "outcome": "sustained",
-   "quote": "Flame sooty even at lower flows"
+   "outcome": "not-stated",
+   "quote": null
   },
   {
    "testId": "O4",
@@ -262,12 +262,12 @@
   {
    "testId": "O5a",
    "outcome": "sustained",
-   "quote": "burned for 9 min then blew out"
+   "quote": "burned for 9 min"
   },
   {
    "testId": "O5b",
-   "outcome": "no-ignition",
-   "quote": "Would not sustain a flame without igniter on"
+   "outcome": "brief",
+   "quote": "Would not sustain a flame"
   },
   {
    "testId": "O6",
@@ -276,28 +276,28 @@
   },
   {
    "testId": "O7",
-   "outcome": "not-stated",
-   "quote": null
+   "outcome": "sustained",
+   "quote": "Blowoff fan 97"
   },
   {
    "testId": "O8a",
-   "outcome": "brief",
+   "outcome": "sustained",
    "quote": "Quench at pot 0.31"
   },
   {
    "testId": "O8b",
-   "outcome": "not-stated",
-   "quote": null
+   "outcome": "sustained",
+   "quote": "Blowoff fan 78"
   },
   {
    "testId": "O9",
-   "outcome": "not-stated",
-   "quote": null
+   "outcome": "sustained",
+   "quote": "Blowoff fan 68"
   },
   {
    "testId": "O10",
    "outcome": "sustained",
-   "quote": "25 s for rest of flame to blowoff"
+   "quote": "Leading edge (LE) blew out at fan 81, 25 s for rest of flame"
   },
   {
    "testId": "O11",
@@ -312,7 +312,7 @@
   {
    "testId": "O13a",
    "outcome": "sustained",
-   "quote": "burned at 5 pot settings"
+   "quote": "flame self-extinguished after 3+ min"
   },
   {
    "testId": "O13b",
@@ -322,17 +322,17 @@
   {
    "testId": "O14",
    "outcome": "sustained",
-   "quote": "Ignition at 5 cm/s"
+   "quote": "slow pot decreases to quenching pot 0.28"
   },
   {
    "testId": "O15a",
    "outcome": "sustained",
-   "quote": "1.5 min at 5 cm/s"
+   "quote": "Decrease flow to extinction at 0.32 pot"
   },
   {
    "testId": "O15b",
    "outcome": "sustained",
-   "quote": "decreased flow to extinction"
+   "quote": "decreased flow to extinction at 0.27 pot"
   },
   {
    "testId": "O16",
@@ -347,12 +347,12 @@
   {
    "testId": "O18",
    "outcome": "sustained",
-   "quote": "Got rod hot, blue flame"
+   "quote": "Got rod hot, blue flame, turned flow up to pot 4.0"
   },
   {
    "testId": "O19",
    "outcome": "sustained",
-   "quote": "Ignition at 5 cm/s"
+   "quote": "slow pot decreases to quenching pot 0.288"
   },
   {
    "testId": "O20",
@@ -377,7 +377,7 @@
   {
    "testId": "P2",
    "outcome": "sustained",
-   "quote": "stable flame at pot 0.33"
+   "quote": "Nice stable burn at low velocity"
   },
   {
    "testId": "P3a",
@@ -392,17 +392,17 @@
   {
    "testId": "P4",
    "outcome": "sustained",
-   "quote": "long slow burn, steady at multiple pots until turned off flow"
+   "quote": "long slow burn, steady at multiple pots"
   },
   {
    "testId": "P5",
    "outcome": "sustained",
-   "quote": "(flame persisted for all) finally turned down flow to 0 to extinguish"
+   "quote": "flame persisted for all"
   },
   {
    "testId": "P6",
    "outcome": "sustained",
-   "quote": "steady burning until turned flow off, multiple pot settings"
+   "quote": "steady burning until turned flow off"
   },
   {
    "testId": "P8",
@@ -431,7 +431,7 @@
   },
   {
    "testId": "P13b",
-   "outcome": "sustained",
+   "outcome": "brief",
    "quote": "flame out when pot turned to 0.32"
   },
   {
@@ -452,7 +452,7 @@
   {
    "testId": "P17",
    "outcome": "sustained",
-   "quote": "leading edge receded slightly but did not blowoff"
+   "quote": "tried blowoff without success"
   },
   {
    "testId": "P18",
@@ -462,7 +462,7 @@
   {
    "testId": "P19",
    "outcome": "sustained",
-   "quote": "flame out at 0.32"
+   "quote": "Tried blowoff, did not blowoff at pot 10"
   },
   {
    "testId": "P20",
@@ -476,18 +476,18 @@
   },
   {
    "testId": "P21b",
-   "outcome": "not-stated",
-   "quote": null
+   "outcome": "no-ignition",
+   "quote": "Igniter broke after third attempt to ignite flattened end of sample"
   },
   {
    "testId": "P22a",
    "outcome": "sustained",
-   "quote": "Extinguished at higher flow, possibly rod not preheated enough"
+   "quote": "Extinguished at higher flow"
   },
   {
    "testId": "P22b",
    "outcome": "sustained",
-   "quote": "Extinguished at lower flow than P22a by a bit"
+   "quote": "Extinguished at lower flow than P22a"
   },
   {
    "testId": "P23",
@@ -562,17 +562,17 @@
   {
    "testId": "T13",
    "outcome": "brief",
-   "quote": "flame extinguished quickly after flow change."
+   "quote": "flame extinguished quickly after flow change"
   },
   {
    "testId": "T14",
-   "outcome": "sustained",
+   "outcome": "brief",
    "quote": "Extinguished as we reduced flow below 3 cm/s"
   },
   {
    "testId": "T15",
-   "outcome": "not-stated",
-   "quote": null
+   "outcome": "sustained",
+   "quote": "no blowoff attained"
   },
   {
    "testId": "T16",
@@ -586,8 +586,8 @@
   },
   {
    "testId": "T18",
-   "outcome": "not-stated",
-   "quote": null
+   "outcome": "brief",
+   "quote": "Brief ignition but flame extinguished as it spread away from igniter"
   },
   {
    "testId": "T19",
@@ -617,7 +617,7 @@
   {
    "testId": "T24",
    "outcome": "sustained",
-   "quote": "steady spread of a one-sided flame"
+   "quote": "got steady spread of a one-sided flame"
   },
   {
    "testId": "T25",

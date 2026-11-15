@@ -48,6 +48,33 @@ export function splitRows(pageText: string, testIds: readonly string[]): Appendi
   }))
 }
 
+/** A sensor reading as Appendix A prints it: a number, dashes for a blank, or an over-range mark. */
+const READING = /^(?:[-+]?\d+(?:\.\d+)?|-{2,}|\+?OR|Over|>\d[\d,]*)$/
+/** Each row ends its readings with eight in a row: four O2, two CO2, two CO. */
+const READINGS_RUN = 8
+/** The footnotes under a table open with this one. */
+const FOOTNOTES = /\s[a-z]?Greenwich Mean Time\..*$/
+
+/**
+ * A row's "Test observations" notes: what follows its last run of eight or more sensor readings.
+ * The model is given only this, so it reads the notes and not thirty settings (and the input is
+ * half the size). The dates that open the next row may trail it. If a row has no such run, the
+ * whole row is returned: nothing is ever cut on a guess. Quotes are still checked against the row.
+ */
+export function notesOf(row: AppendixRow): string {
+  const text = row.text.replace(FOOTNOTES, '')
+  const tokens = [...text.matchAll(/\S+/g)]
+  let run = 0
+  let notesStart = -1
+  for (const token of tokens) {
+    if (READING.test(token[0])) {
+      run++
+      if (run >= READINGS_RUN) notesStart = token.index + token[0].length
+    } else run = 0
+  }
+  return notesStart === -1 ? text : text.slice(notesStart).trim()
+}
+
 /** What the model returns for one test (pipeline/prompts/read-outcomes.md). */
 export interface RawOutcome {
   testId?: unknown
@@ -114,4 +141,44 @@ export function assembleOutcomes(testIds: readonly string[], checked: readonly T
   const byId = new Map<string, TestOutcome>()
   for (const outcome of checked) if (!byId.has(outcome.testId)) byId.set(outcome.testId, outcome)
   return testIds.map((testId) => byId.get(testId) ?? { testId, outcome: 'not-stated', quote: null })
+}
+
+// What the views show for a test's outcome. The file holds only the outcome and its quote (SPEC
+// §6); where the row is, and whether there is one, comes from the flow evidence in bass2.json,
+// which was found on the same Appendix A pages.
+
+/** Why a test's outcome is "not stated". */
+export const NOT_STATED_REASONS = {
+  'no-row': 'Not in Appendix A',
+  'no-flame-note': 'NASA’s note doesn’t describe the flame',
+} as const
+
+/** Where a test's row is in Appendix A; a null page means it has no row there. */
+export interface AppendixPlace {
+  pdfPage: number | null
+  reportPage: number | null
+}
+
+export interface OutcomeView {
+  outcome: Outcome
+  /** NASA's words, checked in the test's own row; null when not stated. */
+  quote: string | null
+  /** For "not-stated" only: which of the two reasons applies. */
+  reason: string | null
+  /** The quote's page, when there is a quote. */
+  place: AppendixPlace | null
+}
+
+/** A test's outcome as shown: with the reason it isn't stated, or the page its quote is on. */
+export function outcomeView(outcome: TestOutcome, place: AppendixPlace | undefined): OutcomeView {
+  const inAppendix = typeof place?.pdfPage === 'number'
+  if (outcome.outcome === 'not-stated' || !outcome.quote) {
+    return {
+      outcome: 'not-stated',
+      quote: null,
+      reason: inAppendix ? NOT_STATED_REASONS['no-flame-note'] : NOT_STATED_REASONS['no-row'],
+      place: null,
+    }
+  }
+  return { outcome: outcome.outcome, quote: outcome.quote, reason: null, place: inAppendix ? (place ?? null) : null }
 }

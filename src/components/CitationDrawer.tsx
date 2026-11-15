@@ -184,7 +184,7 @@ function ClaimDetails({ claim, sweepDelayMs }: { claim: Claim; sweepDelayMs: num
               {sourceFolder(claim.sourceId)}/{locator.file}
             </dd>
             <dt className="text-muted">Line</dt>
-            <dd className="tabular-nums">{locator.line}</dd>
+            <dd className="tabular-nums">{locator.line ?? 'Runs over several lines'}</dd>
           </>
         )}
       </dl>

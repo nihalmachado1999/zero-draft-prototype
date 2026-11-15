@@ -366,10 +366,18 @@ Moving the O2 slider during a drain stops the drain.
 - Tiles then show the outcome, labeled "AI-read from NASA's notes, quote checked".
 - This is a second, separate use of AI on real NASA records, and it fixes the SIBAL blind spot.
 
+**As built (M7, 15 Nov):**
+- `pipeline/scripts/outcomes.ts`, prompt `pipeline/prompts/read-outcomes.md` (version 5 after four revisions), checks in `src/lib/outcomes.ts`. One call per Appendix A page, as planned.
+- Each page is first split into one row per test (a test id followed by its sample number opens a row), and the model is given only each row's notes, under its test id: what follows the row's last run of eight sensor readings. It can't give one test's note to its neighbour, and the input is under half the size. A quote is kept only if it is in that test's own row, which is stricter than "after its id on the page". A row whose answer fails the check is asked once more.
+- What the outcomes mean, as the prompt defines them. No ignition: the note says so, or a flame existed only with the igniter on. Brief: the note calls it brief or a flash, or it "would not sustain", or it went out by itself before the crew changed anything. Sustained: a flame that was burning on its own, including one that went out when the crew changed the flow ("extinguished at 0.36" after "decreased flow" is a quenched flame, not a brief one). The test's own note decides, never the report's summary of that sample type.
+- Not stated has two reasons, shown wherever the outcome is: "Not in Appendix A" (O20, O21, O22, run in 2016) and "NASA's note doesn't describe the flame". The file keeps the §6 shape; which reason applies comes from the flow evidence in `bass2.json`, which already records each test's Appendix A page (or none). A test checks that no "not stated" outcome is a failed quote check in disguise.
+- On screen: a mark at each tile's bottom right (filled flame, flame outline, bar, three dots) with a key under the wall; an outcome line in the brief under the wall; and in the record a section "What NASA's notes say", apart from "Burn check", so a SIBAL test can read "Fire too small for the sensors" and "Outcome: Sustained flame".
+
 **AI dataset briefing** (collapsible, top of the view):
 - 4–6 sentences written by the pipeline (§7.2) from the computed stats JSON only.
 - A script fails the build if any number in the text isn't in the stats JSON.
-- Label: "AI-written, numbers checked".
+- Label: "AI-written, numbers checked"
+- As built (M7): `pipeline/scripts/briefing.ts` with `pipeline/prompts/briefing.md`; the stats are `briefingStats()` in `src/lib/briefing.ts` (the audit's counts and the "Checked against NASA" statistics, rounded as on screen). `checkBriefing()` keeps a sentence only if every number in it is in the stats (as written or rounded to fewer decimals), it has no number in words, and it doesn't say "safe", "in space" or "NASA's errors"; with fewer than 4 sentences left nothing is written. `npm test` runs the same check on `public/data/briefing.json`..
 
 **Distribution strip:** small-multiple bar charts of initial O2, ΔO2 and CO-per-CO2.
 
@@ -662,7 +670,13 @@ Unverified claims never appear outside the drawer.
   - 0.10 × test-level data available
   - Unknown inputs score 0 and are flagged. The weights are shown as "our judgment call".
 
-**As built (14 Nov):** the index is built from verified quotes, without the LLM extraction (`text.ts`, `extract.ts`, `verify.ts`, `briefing.ts` and F2b's `outcomes.ts` are still not built). Output 1 is the investigation column of the F3d table on RANK rather than a separate strip; the "Record inconsistencies" list is at the bottom of SUMMARIZE, with a fifth item found while indexing: Saffire-I's Proposal Title field is about smoke for fire detection (`psi98.proposal-title`), SAME's subject, while its objectives are fire growth and flammability limits.
+**As built (14 Nov):** the index is built from verified quotes, without the LLM extraction (the pipeline scripts were built the next day: see the M7 notes below and under F2b). Output 1 is the investigation column of the F3d table on RANK rather than a separate strip; the "Record inconsistencies" list is at the bottom of SUMMARIZE, with a fifth item found while indexing: Saffire-I's Proposal Title field is about smoke for fire detection (`psi98.proposal-title`), SAME's subject, while its objectives are fire growth and flammability limits.
+
+**As built (M7, 15 Nov), the AI summaries:** `extract.ts` makes one call per investigation with `pipeline/prompts/extract-investigation.md` version 2, and `verify.ts` (no LLM; checks in `src/lib/investigationVerify.ts`) writes `public/data/investigations.json` and `pipeline/out/review.md`.
+- Input: the investigation's `i_Investigation.txt` without blank fields and people's details. The `s_*.txt` files in our sources are empty stubs ("Do not use this"). PSI-25 has no metadata file, so it reads the BASS-II report's summary page (PDF p. 9) and nothing else of the report.
+- Version 2 of the prompt asks only for what the section shows (acronym, title, platform, tested O2, pressure, flow, and a 2 to 3 sentence summary), with a quote per sentence. Version 1 pooled one set of quotes for the whole summary, which can't give each sentence its own footnote. Gravity, phenomena and materials stay with the checked-quote index on RANK.
+- Checks: every quote must be in the investigation's text; a text value must be inside one of its quotes; every number of a range or a sentence must be in its quotes. What fails is null ("Not stated") or left out, and listed in `review.md`. Units are converted only afterwards.
+- SUMMARIZE shows them in a frameless "Investigations" section above "Record inconsistencies", labeled "AI-written, checked"; every value and sentence carries a footnote to its quote.
 
 ### F8. NASA photo reveal (P1)
 
@@ -842,6 +856,8 @@ all source text -- chunks.ts --> api/_data/chunks.json                          
 - The quote must be at most 15 words, copied from that test's observation text.
 - Verify each quote is on its page after `normalize()`, and that the test id appears before it on the page. Failures become `not-stated`.
 - Spot-checks to put in a test: O12 is `no-ignition` ("No sustained flame at any flow…"), F3 is `brief` ("Brief ignition flash, no sustained flame…"), T28a is `brief`.
+
+**As built (M7):** the scripts share `pipeline/scripts/pipelineIo.ts`: it reads a prompt with its version line, asks at temperature 0 with `llm.ts`'s `rateLimitRetries` (a pipeline-only option: on a 429 it waits what the provider asks, 60 s at most, and asks again; Lab Partner's endpoint never sets it), and keeps every raw reply in `pipeline/out/raw/` with the model, prompt version and the exact input. A kept reply for the same prompt version and input is reused, so a script can be re-run without asking again; `--fresh` asks again. Groq's free tier allows 200,000 tokens a day for this model, which M7's runs exhausted: budget about 100,000 tokens for one full pass of all three scripts.
 
 **`text.ts`:**
 - `.txt`/`.tsv` files are one page each, with lines kept.

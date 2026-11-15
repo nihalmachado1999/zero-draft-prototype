@@ -114,9 +114,12 @@ No NASA logos or insignia are used anywhere.
 
 - **Code**: Claude Code (Anthropic) wrote the application code, directed and reviewed by the team. Commits it made carry a `Co-Authored-By: Claude` line.
 - **Lab Partner**: an LLM (Groq, `openai/gpt-oss-120b`; Gemini when no Groq key is set) chooses tools and writes the answers. Every answer shows **"AI-written, checked"**.
+- **Test outcomes**: the same LLM read NASA's "Test observations" note for each test in Appendix A of the BASS-II report and said what the flame did (sustained, brief, no ignition, or not stated). A script keeps an outcome only if its quote is in that test's own row. Shown as **"AI-read from NASA's notes, quote checked"**, apart from the sensors' verdict.
+- **Investigation summaries**: the LLM summarized each investigation from NASA's own PSI record of it. A script keeps a value or sentence only if its quote is in that record and its numbers are in the quote; the rest is "Not stated" and listed in `pipeline/out/review.md`. Shown as **"AI-written, checked"**.
+- **Dataset briefing**: 4 to 6 sentences written from the audit's statistics only. A sentence is kept only if every number in it is in those statistics; `npm test` runs that check. Shown as **"AI-written, numbers checked"**.
 - **Cached answers**: the suggested questions' answers in `src/data/labPartnerCache.json` were written by the same LLM, checked by the server, then reviewed by hand.
 - **How AI output is checked**: the quote check, number check, attribution check and no-orders rule above, plus human review of the cached answers.
-- **Metadata**: every generated JSON file carries `generatedBy`, `model` and `promptVersion` (`model` is null where no LLM was involved). Prompts are in `pipeline/prompts/` with version lines.
+- **Metadata**: every generated JSON file carries `generatedBy`, `model` and `promptVersion` (`model` is null where no LLM was involved). Prompts are in `pipeline/prompts/` with version lines, and every raw LLM reply is kept in `pipeline/out/raw/`.
 - **No AI images or video.** The flames are drawings rendered in code and labelled "Illustration". The demo video is a screen recording of the app.
 
 ## Run it
@@ -145,6 +148,7 @@ npm run dev
 | `npm run check:claims` | confirm every quote is on its stated page or line |
 | `npm run llm:smoke` | check the LLM key works: prints `ok` |
 | `npm run lab:ask -- "question"` | ask Lab Partner from the terminal |
+| `npm run pipeline:outcomes`, `pipeline:extract`, `pipeline:verify`, `pipeline:briefing` | re-run the AI pipeline (reuses the kept replies; `-- --fresh` asks again) |
 
 ## Deploy on Vercel
 
@@ -162,4 +166,5 @@ npm run dev
 - **Eq. 6.1 source**: the PDF's text layer garbles the equation, so it can't be a checked quote. The drawer shows it as printed (report p. 75), and `check:claims` confirms its four coefficients are on that page in that order; a test confirms they are the ones the model uses.
 - **Cached answers**: all six suggested questions are cached (Groq, `openai/gpt-oss-120b`), each read against its sources. The 39% answer says "the initial O2 reading was blank" where the uncalibrated initial reading was; its citation chip opens the exact Appendix A row.
 - **Narrow screens**: at 1280 px wide with the Lab Partner dock open, the Burn Twin's labels crowd. The demo size is 1440 × 900. Below 1024 px (a phone) the app says it needs a wider screen, with a button to show it anyway.
-- **Investigation index**: built from verified quotes of the PSI records, not from the AI extraction pipeline the plan describes (`pipeline:text`, `extract`, `verify`, `briefing` and the test-outcome reader are not built). SAME-R has no record in our sources. No ISS cabin atmosphere is quoted in our sources, so relevance is scored against the lunar atmospheres only.
+- **Investigation index**: the relevance ranking on Rank is built from quotes we checked by hand-written claims, not from the AI summaries. SAME-R has no record in our sources. No ISS cabin atmosphere is quoted in our sources, so relevance is scored against the lunar atmospheres only.
+- **AI-read outcomes**: the reader judges each test from NASA's one-line note, so a terse note can be read differently by a different model or prompt. Every outcome shows the quote it rests on. About a tenth of the notes don't describe the flame at all and read "Not stated".

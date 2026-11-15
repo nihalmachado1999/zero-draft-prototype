@@ -1,7 +1,9 @@
 import { motion, type Transition } from 'motion/react'
 import type { Ref } from 'react'
 import { severityOf, type Bass2Row } from '../../lib/audit'
-import { FlowGlyph, StatusGlyph } from './glyphs'
+import { OUTCOME_LABELS } from '../../lib/generatedData'
+import { useOutcome } from '../../lib/useOutcome'
+import { FlowGlyph, OutcomeGlyph, StatusGlyph } from './glyphs'
 
 /** A tile the filters don't match stays in place, dimmed to this. */
 const DIMMED_OPACITY = 0.18
@@ -32,8 +34,9 @@ type TestTileProps = {
 
 /**
  * One test: a small square, its id in mono, its fill only from data (initial O2). Corner marks
- * give its flow direction (bottom left) and most serious flag (top right). The same tile, by
- * its layoutId, flies between the wall and the quarantine bay.
+ * give its flow direction (bottom left), its most serious flag (top right) and, once the outcome
+ * reader has run, what NASA's notes say the flame did (bottom right). The same tile, by its
+ * layoutId, flies between the wall and the quarantine bay.
  */
 export function TestTile({
   row,
@@ -50,6 +53,9 @@ export function TestTile({
   onKeyDown,
 }: TestTileProps) {
   const severity = severityOf(row.flags)
+  const outcome = useOutcome(row.testId)
+  // What the mark shows, in words, for a screen reader: the outcome, or why there isn't one.
+  const outcomeWords = outcome && `outcome from NASA’s notes: ${(outcome.reason ?? OUTCOME_LABELS[outcome.outcome]).toLowerCase()}`
   return (
     <motion.button
       ref={buttonRef}
@@ -62,7 +68,7 @@ export function TestTile({
       animate={{ opacity: dimmed ? DIMMED_OPACITY : 1 }}
       transition={{ ...flight, opacity: DIM_FADE }}
       tabIndex={tabIndex}
-      aria-label={label}
+      aria-label={outcomeWords ? `${label}, ${outcomeWords}` : label}
       data-test-id={row.testId}
       onClick={onClick}
       onFocus={onFocus}
@@ -76,6 +82,7 @@ export function TestTile({
       {row.testId}
       <StatusGlyph severity={severity} className="absolute top-1 right-1" />
       <FlowGlyph flow={row.flowConfig} className="absolute bottom-1 left-1 text-ink/70" />
+      {outcome && <OutcomeGlyph outcome={outcome.outcome} className="absolute right-1 bottom-[3px] text-ink/80" />}
     </motion.button>
   )
 }

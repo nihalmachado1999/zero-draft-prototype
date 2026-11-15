@@ -1,15 +1,15 @@
 {
  "generatedBy": "pipeline/scripts/outcomes.ts",
- "generatedAt": "2026-11-14T18:39:48.355Z",
+ "generatedAt": "2026-11-15T03:37:00.512Z",
  "model": "openai/gpt-oss-120b",
- "promptVersion": "read-outcomes@1",
+ "promptVersion": "read-outcomes@5",
  "subject": "PSI-25 p.113",
  "finishReason": "STOP",
  "usage": {
-  "input": 1264,
-  "output": 500,
-  "thinking": 315
+  "input": 1434,
+  "output": 587,
+  "thinking": 400
  },
- "input": "### F1\nF1 227 Nomex® (DuPontTM) natural (Nomex III) Integral 2 Concurrent 82 9.5 250 8 NA N CL M NA off 1/10 F2 1,000 Cont 4 208 22.2 22.2 20.6 20.6 0.46 0.45 0 2 Ignited briefly but did not spread at all and extinguished while the igniter was still on 7/28/2014 GMT 209 -------- 103\n\n### F2\nF2 228m Nomex® natural (Nomex III) Integral 2 Concurrent 92 15 250 NA NA N CL M NA NA 1/10 F2 1,000 Cont 8 72 21 21.0 21 21.0 0.37 0.39 105 82 Tried to ignite, flame would not sustain 8/1/14 GMT 213 8:58:25 115\n\n### F3\nF3 229m Nomex® natural (Nomex III) Integral 1 Concurrent 61 8 50 NA NA N CL A -3 NA ------ F2 1,000 Cont 13 46 21.7 0.9 20.8 ------ 0.36 ------ 2 --- Brief ignition flash, no sustained flame; no postburn sensor readings taken 6/24/2018 -------- 36\n\n### F4\nF4 39M Japan Wax candle Integral 2 Stagnation See notes 3 ignition 250 NA NA N CH A -5 9F 1.0 ------ F2 1,600 7 s 3 270 17.4 17.4 16.2 16.2 0.38 0.48 22 56 Long ignition, but blue flame established at 3 cm/s, reduced flow in increments: potentiometers 0.6, 0.4, 0.35, 0.32, 0.31, 0.305 flame extinguished aGreenwich Mean Time. bContinuous high (CH). Continuous low (CL). Shutter cManual (M). Automatic (A). dExposure value (#EV). eNumber of frames and exposure increment (#F/1.0). fContinuous (cont). Seconds (s).",
- "text": "{\n  \"outcomes\": [\n    {\n      \"testId\": \"F1\",\n      \"outcome\": \"brief\",\n      \"quote\": \"Ignited briefly but did not spread at all and extinguished while the igniter was still on\"\n    },\n    {\n      \"testId\": \"F2\",\n      \"outcome\": \"no-ignition\",\n      \"quote\": \"Tried to ignite, flame would not sustain\"\n    },\n    {\n      \"testId\": \"F3\",\n      \"outcome\": \"brief\",\n      \"quote\": \"Brief ignition flash, no sustained flame; no postburn sensor readings taken\"\n    },\n    {\n      \"testId\": \"F4\",\n      \"outcome\": \"sustained\",\n      \"quote\": \"blue flame established at 3 cm/s\"\n    }\n  ]\n}"
+ "input": "### F1\nIgnited briefly but did not spread at all and extinguished while the igniter was still on 7/28/2014 GMT 209 -------- 103\n\n### F2\nTried to ignite, flame would not sustain 8/1/14 GMT 213 8:58:25 115\n\n### F3\nBrief ignition flash, no sustained flame; no postburn sensor readings taken 6/24/2018 -------- 36\n\n### F4\nLong ignition, but blue flame established at 3 cm/s, reduced flow in increments: potentiometers 0.6, 0.4, 0.35, 0.32, 0.31, 0.305 flame extinguished",
+ "text": "{\n  \"outcomes\": [\n    {\n      \"testId\": \"F1\",\n      \"outcome\": \"brief\",\n      \"quote\": \"Ignited briefly but did not spread at all and extinguished while the igniter was still on\"\n    },\n    {\n      \"testId\": \"F2\",\n      \"outcome\": \"brief\",\n      \"quote\": \"Tried to ignite, flame would not sustain\"\n    },\n    {\n      \"testId\": \"F3\",\n      \"outcome\": \"brief\",\n      \"quote\": \"Brief ignition flash, no sustained flame; no postburn sensor readings taken\"\n    },\n    {\n      \"testId\": \"F4\",\n      \"outcome\": \"sustained\",\n      \"quote\": \"blue flame established at 3 cm/s, reduced flow in increments\"\n    }\n  ]\n}"
 }
