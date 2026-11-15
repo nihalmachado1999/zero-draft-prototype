@@ -11,6 +11,7 @@ import {
   MAX_QUOTE_WORDS,
   NOT_STATED_REASONS,
   notesOf,
+  outcomeFindings,
   outcomeView,
   OUTCOMES,
   splitRows,
@@ -96,6 +97,35 @@ describe('outcomeView', () => {
 
   it('never shows an outcome without its quote', () => {
     expect(outcomeView({ testId: 'B1', outcome: 'sustained', quote: null }, place).outcome).toBe('not-stated')
+  })
+})
+
+describe('outcomeFindings', () => {
+  const rows = compileBass2(csvText, flowByTestJson as FlowByTest)
+  const row = (testId: string) => rows.find((r) => r.testId === testId)!
+
+  it('counts from the rows and the outcomes: sensors, notes, and the SIBAL tests too small for the sensors', () => {
+    // O4: sensors confirm, notes brief (a disagreement). T16: SIBAL, too small, notes sustained (the other one).
+    const findings = outcomeFindings(rows, [
+      { testId: 'O4', outcome: 'brief', quote: 'q' },
+      { testId: 'T16', outcome: 'sustained', quote: 'q' },
+      { testId: 'M5', outcome: 'sustained', quote: 'q' },
+    ])
+    expect(row('O4').burnConfirmed && row('M5').burnConfirmed && !row('T16').burnConfirmed).toBe(true)
+    expect(findings.burnConfirmed).toBe(65)
+    expect(findings.sustained).toBe(2)
+    // 27 SIBAL tests, 2 of them quarantined (their readings are unusable, so "not checked").
+    expect(findings.tooSmall).toBe(25)
+    expect(findings.tooSmallSustained).toBe(1)
+    expect(findings.sensorsYesNotesNo).toEqual(['O4'])
+    expect(findings.notesYesSensorsNo).toEqual(['T16'])
+  })
+
+  it('reports an empty direction as empty, and treats a missing outcome as not stated', () => {
+    const findings = outcomeFindings(rows, [])
+    expect(findings.sustained).toBe(0)
+    expect(findings.sensorsYesNotesNo).toEqual([])
+    expect(findings.notesYesSensorsNo).toEqual([])
   })
 })
 
@@ -243,13 +273,14 @@ describe.skipIf(!outcomesFile)('public/data/test-outcomes.json', () => {
   it('calls a test not stated only when the model did: no failed quote check hides behind that label', () => {
     // The views say "NASA’s note doesn’t describe the flame" for these, so it has to be the
     // reader's own verdict. The kept raw replies say what the reader answered, page by page.
-    const raws = import.meta.glob('../../pipeline/out/raw/outcomes-p*.json', { eager: true, import: 'default' }) as Record<
+    const raws = import.meta.glob('../../pipeline/out/raw/outcomes-*.json', { eager: true, import: 'default' }) as Record<
       string,
-      { promptVersion: string; text: string }
+      { promptVersion: string; model: string; text: string }
     >
     const answers = new Map<string, string[]>()
-    for (const [path, raw] of Object.entries(raws)) {
-      if (path.includes('probe') || raw.promptVersion !== file.promptVersion) continue
+    for (const raw of Object.values(raws)) {
+      // Only the replies this file was built from: the same prompt version, by the same model.
+      if (raw.promptVersion !== file.promptVersion || raw.model !== file.model) continue
       for (const o of (JSON.parse(raw.text) as { outcomes: { testId: string; outcome: string }[] }).outcomes) {
         answers.set(o.testId, [...(answers.get(o.testId) ?? []), o.outcome])
       }
@@ -258,6 +289,19 @@ describe.skipIf(!outcomesFile)('public/data/test-outcomes.json', () => {
       if (outcome.outcome !== 'not-stated' || !appendixRows.some((row) => row.testId === outcome.testId)) continue
       expect(answers.get(outcome.testId), outcome.testId).toContain('not-stated')
     }
+  })
+
+  it('finds what the header says: sustained flames among tests the sensors couldn’t confirm', () => {
+    const findings = outcomeFindings(rows, file.outcomes)
+    expect(findings.burnConfirmed).toBe(65)
+    expect(findings.sustained).toBe(file.outcomes.filter((o) => o.outcome === 'sustained').length)
+    expect(findings.tooSmall).toBe(25)
+    expect(findings.tooSmallSustained).toBeGreaterThan(0)
+    expect(findings.tooSmallSustained).toBeLessThanOrEqual(findings.tooSmall)
+    // Each list is one side of a disagreement, so no test is in both.
+    expect(findings.sensorsYesNotesNo.filter((id) => findings.notesYesSensorsNo.includes(id))).toEqual([])
+    for (const id of findings.sensorsYesNotesNo) expect(['brief', 'no-ignition']).toContain(of(id)?.outcome)
+    for (const id of findings.notesYesSensorsNo) expect(of(id)?.outcome).toBe('sustained')
   })
 
   it('leaves the three 2016 tests, which aren’t in the appendix, not stated', () => {

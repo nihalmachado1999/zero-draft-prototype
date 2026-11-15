@@ -1,14 +1,14 @@
 // npm run pipeline:verify
 //
-// Checks every kept extraction (pipeline/out/raw/extract-<ID>.json) against the investigation's
-// own text and writes public/data/investigations.json, with pipeline/out/review.md listing each
+// Checks every kept extraction (pipeline/out/raw/extract-batch-<n>.json) against each
+// investigation's own text and writes public/data/investigations.json, with pipeline/out/review.md listing each
 // field or sentence that failed and why (SPEC F7, §7.2). No LLM: the checks are src/lib/
 // investigationVerify.ts. A failed field is null in the output ("Not stated"), never repaired.
 import type { InvestigationsFile } from '../../src/lib/generatedData'
 import { verifyInvestigation, type FieldFailure, type InvestigationSummary } from '../../src/lib/investigationVerify'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { INVESTIGATION_IDS, inputFor, pagesFor, PROMPT, rawName } from './extract'
+import { BATCHES, INVESTIGATION_IDS, inputFor, pagesFor, PROMPT, rawName } from './extract'
 import { keptReply, loadPrompt, parseReply, ROOT, writeJson } from './pipelineIo'
 
 const GENERATED_BY = 'pipeline/scripts/verify.ts'
@@ -44,12 +44,23 @@ function main() {
   const investigations: InvestigationSummary[] = []
   const failures: FieldFailure[] = []
   let model = ''
-  for (const id of INVESTIGATION_IDS) {
-    const raw = keptReply(rawName(id), prompt.version, inputFor(id))
-    if (!raw) throw new Error(`No kept reply for ${id} at ${prompt.version}. Run: npm run pipeline:extract`)
-    if (model && raw.model !== model) throw new Error(`${id} was extracted by ${raw.model}, the others by ${model}: one model per file`)
+  // Each investigation's raw object, from the batch that holds it.
+  const extracted = new Map<string, unknown>()
+  for (const [i, ids] of BATCHES.entries()) {
+    const raw = keptReply(rawName(i), prompt.version, inputFor(ids))
+    if (!raw) throw new Error(`No kept reply for batch ${i + 1} (${ids.join(', ')}) at ${prompt.version}. Run: npm run pipeline:extract`)
+    if (model && raw.model !== model) throw new Error(`Batch ${i + 1} was extracted by ${raw.model}, the other by ${model}: one model per file`)
     model = raw.model
-    const result = verifyInvestigation(id, pagesFor(id), parseReply<unknown>(raw))
+    const reply = parseReply<{ investigations?: unknown }>(raw)?.investigations
+    for (const item of Array.isArray(reply) ? reply : []) {
+      const id = typeof item === 'object' && item !== null ? (item as { id?: unknown }).id : undefined
+      // Only an investigation the batch was asked about, and only its first answer.
+      if (typeof id === 'string' && ids.includes(id) && !extracted.has(id)) extracted.set(id, item)
+    }
+  }
+  for (const id of INVESTIGATION_IDS) {
+    // An investigation the model left out has no reply: every field fails, none is invented.
+    const result = verifyInvestigation(id, pagesFor(id), extracted.get(id) ?? null)
     investigations.push(result.summary)
     failures.push(...result.failures)
     const stated = ['acronym', 'title', 'platform', 'o2Pct', 'pressure', 'flow'].filter(

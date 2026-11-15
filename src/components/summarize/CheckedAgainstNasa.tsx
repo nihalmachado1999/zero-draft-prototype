@@ -1,6 +1,9 @@
+import { CircleCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { nasaChecks, type Bass2Row, type CoYieldStat } from '../../lib/audit'
 import { getClaim } from '../../lib/claims'
+import type { OutcomeFindings } from '../../lib/outcomes'
+import { formatHash } from '../../lib/route'
 import { Cite } from '../Cite'
 
 function Quote({ id }: { id: string }) {
@@ -46,7 +49,45 @@ function MedianMean({ stat, unit }: { stat: CoYieldStat; unit?: string }) {
  * words. NASA says "on average" without listing which tests it averaged, so CO rows show the
  * median and the mean. Computed over every test, whatever the filters, by lib/audit.ts.
  */
-export function CheckedAgainstNasa({ rows }: { rows: Bass2Row[] }) {
+/** Test ids as links to their records, or "none" when a direction is empty: the row never hides. */
+function TestIds({ ids }: { ids: readonly string[] }) {
+  if (ids.length === 0) return <span className="text-muted">none</span>
+  return (
+    <span className="flex flex-wrap gap-x-2 gap-y-0.5">
+      {ids.map((id) => (
+        <a key={id} href={formatHash('summarize', { test: id })} className="test-id text-cyan hover:underline">
+          {id}
+        </a>
+      ))}
+    </span>
+  )
+}
+
+/** Where the sensors and NASA's notes (as the AI read them) say different things, both ways. */
+function Disagreements({ findings }: { findings: OutcomeFindings }) {
+  const total = findings.sensorsYesNotesNo.length + findings.notesYesSensorsNo.length
+  return (
+    <span className="flex flex-col gap-2">
+      <span>
+        Sensors and NASA’s notes disagree in <Num>{total}</Num> tests.
+      </span>
+      <span className="flex flex-col gap-0.5">
+        <span>
+          Burn confirmed by sensors, but the notes say brief or no ignition: <Num>{findings.sensorsYesNotesNo.length}</Num>
+        </span>
+        <TestIds ids={findings.sensorsYesNotesNo} />
+      </span>
+      <span className="flex flex-col gap-0.5">
+        <span>
+          Notes say a sustained flame, but the sensors didn’t confirm a burn: <Num>{findings.notesYesSensorsNo.length}</Num>
+        </span>
+        <TestIds ids={findings.notesYesSensorsNo} />
+      </span>
+    </span>
+  )
+}
+
+export function CheckedAgainstNasa({ rows, findings }: { rows: Bass2Row[]; findings?: OutcomeFindings }) {
   const checks = nasaChecks(rows)
   const lines: { ours: ReactNode; nasa: ReactNode }[] = [
     {
@@ -118,6 +159,26 @@ export function CheckedAgainstNasa({ rows }: { rows: Bass2Row[] }) {
       nasa: checks.lowestUsable && <TestNote testId={checks.lowestUsable.testId} id="bass2.note.o12" />,
     },
   ]
+
+  // Only once the outcome reader's file exists (it renders nothing without it).
+  if (findings) {
+    lines.push({
+      ours: <Disagreements findings={findings} />,
+      nasa: (
+        <span className="flex flex-col gap-2">
+          <span>
+            The notes are NASA’s “Test observations and anomalies” for each test in Appendix A of the BASS-II report
+            <Cite id="bass2.table.observations" />. They can tell of a flame the cabin sensors couldn’t measure, and the
+            sensors can confirm a burn the notes call brief.
+          </span>
+          <span className="flex items-center gap-1 text-xs text-emerald">
+            <CircleCheck aria-hidden="true" className="size-3.5" />
+            AI-read from NASA’s notes, quote checked. Open a test to read its quote.
+          </span>
+        </span>
+      ),
+    })
+  }
 
   return (
     <section aria-labelledby="checked-against-nasa" className="flex flex-col gap-3">

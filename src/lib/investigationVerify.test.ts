@@ -98,6 +98,15 @@ describe('verifyInvestigation', () => {
     expect(failures).toEqual([expect.objectContaining({ id: 'PSI-00', field: 'flowRange', reason: 'no quote was found in the source' })])
   })
 
+  it('nulls a range whose only quote is under 3 words, and says that, not that it wasn’t found', () => {
+    const { summary, failures } = verifyInvestigation('PSI-00', [page], {
+      ...GOOD,
+      flowRange: field({ min: 20, max: 20, unit: 'cm/s' }, '20 cm/s'),
+    })
+    expect(summary.flow.value).toBeNull()
+    expect(failures[0]).toMatchObject({ field: 'flowRange', reason: 'its quote “20 cm/s” is under 3 words, too short to prove a number' })
+  })
+
   it('nulls a range whose number isn’t in its quotes, even if the quote is real', () => {
     const { summary, failures } = verifyInvestigation('PSI-00', [page], {
       ...GOOD,

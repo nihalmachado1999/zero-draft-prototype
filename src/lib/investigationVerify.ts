@@ -87,17 +87,25 @@ export function findQuote(pages: readonly TextPage[], quote: string, file?: unkn
   return { file: found.file, page: found.page, reportPage: found.reportPage, line: lineOf(found, wanted), quote: wanted }
 }
 
-/** The quotes of a raw field that are really in the text, at least `minWords` long. */
-function checkedEvidence(pages: readonly TextPage[], raw: unknown, minWords: number): Evidence[] {
-  if (!Array.isArray(raw)) return []
+/**
+ * The quotes of a raw field that are really in the text, at least `minWords` long. When none is,
+ * `why` says so: a quote that is there but too short is a different failure from one that isn't there.
+ */
+function checkedEvidence(pages: readonly TextPage[], raw: unknown, minWords: number): Evidence[] & { why: string } {
   const out: Evidence[] = []
-  for (const item of raw) {
+  let short: string | null = null
+  for (const item of Array.isArray(raw) ? raw : []) {
     if (!isRecord(item) || typeof item.quote !== 'string') continue
-    if (words(normalize(item.quote)) < minWords) continue
+    if (words(normalize(item.quote)) < minWords) {
+      short ??= normalize(item.quote)
+      continue
+    }
     const evidence = findQuote(pages, item.quote, item.file, item.page)
     if (evidence && !out.some((e) => e.quote === evidence.quote)) out.push(evidence)
   }
-  return out
+  const why =
+    short !== null ? `its quote “${short}” is under ${minWords} words, too short to prove a number` : 'no quote was found in the source'
+  return Object.assign(out, { why })
 }
 
 const NOT_STATED = { value: null, evidence: [] }
@@ -108,7 +116,7 @@ function textField(pages: readonly TextPage[], raw: unknown, fail: Fail): Checke
   if (typeof raw.value !== 'string' || !normalize(raw.value)) return fail('the value is not text')
   const wanted = normalize(raw.value).toLowerCase()
   const evidence = checkedEvidence(pages, raw.evidence, 1)
-  if (evidence.length === 0) return fail('no quote was found in the source')
+  if (evidence.length === 0) return fail(evidence.why)
   const backing = evidence.filter((e) => e.quote.toLowerCase().includes(wanted))
   if (backing.length === 0) return fail('the value is not inside any of its quotes')
   return { value: tidy(raw.value), evidence: backing }
@@ -129,12 +137,12 @@ function rangeField<U extends string>(
   const unit = units.find((u) => u === v.unit)
   if (!unit) return fail(`the unit is not one of: ${units.join(', ')}`)
   const evidence = checkedEvidence(pages, raw.evidence, MIN_QUOTE_WORDS)
-  if (evidence.length === 0) return fail('no quote was found in the source')
+  if (evidence.length === 0) return fail(evidence.why)
   const quoted = evidence.flatMap((e) => numbersIn(e.quote).map(Number))
   for (const n of [v.min, v.max]) {
     if (!isTraceable(String(n), quoted)) return fail(`${n} is not in any of its quotes`)
   }
-  return { value: { min: v.min, max: v.max, unit }, evidence }
+  return { value: { min: v.min, max: v.max, unit }, evidence: [...evidence] }
 }
 
 const convert = (r: Range, by: (n: number) => number): Range => ({ min: by(r.min), max: by(r.max) })
@@ -175,11 +183,11 @@ export function verifyInvestigation(
     const text = typeof record.text === 'string' ? tidy(record.text) : ''
     if (!text) return reject('the sentence has no text')
     const evidence = checkedEvidence(pages, record.evidence, MIN_QUOTE_WORDS)
-    if (evidence.length === 0) return reject('no quote was found in the source')
+    if (evidence.length === 0) return reject(evidence.why)
     const quoted = evidence.flatMap((e) => numbersIn(e.quote).map(Number))
     const loose = numbersIn(text).find((n) => !isTraceable(n, quoted))
     if (loose !== undefined) return reject(`${loose} is not in any of the sentence’s quotes`)
-    summary.push({ text, evidence })
+    summary.push({ text, evidence: [...evidence] })
   })
 
   return {

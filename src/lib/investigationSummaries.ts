@@ -1,6 +1,6 @@
 // What the "Investigations" section needs from public/data/investigations.json (SPEC F7): each
 // checked quote as a claim the citation drawer can show, and ranges as text. Pure.
-import type { Claim } from './claims'
+import { getClaim, type Claim } from './claims'
 import type { Evidence, Range } from './investigationVerify'
 
 /** The BASS-II report, which PSI-25's summary is read from. */
@@ -33,4 +33,19 @@ const trim = (n: number) => String(Number(n.toFixed(2)))
 export function rangeText(range: Range, unit: string): string {
   const joiner = unit === '%' ? '' : ' '
   return range.min === range.max ? `${trim(range.min)}${joiner}${unit}` : `${trim(range.min)} to ${trim(range.max)}${joiner}${unit}`
+}
+
+/**
+ * When an investigation's platform value was read from its record's Flight Platform field, and
+ * that field is one the record inconsistencies list flags (the record's own description says it
+ * ran on a Cygnus): the claim that holds the description. Null otherwise. Found from claims.json:
+ * `<psi>.platform-field` is the flagged field, `<psi>.cygnus` the description.
+ */
+export function platformConflict(investigationId: string, evidence: readonly Evidence[]): string | null {
+  const psi = investigationId.toLowerCase().replace('-', '')
+  const flagged = getClaim(`${psi}.platform-field`)
+  const description = getClaim(`${psi}.cygnus`)
+  if (!flagged?.verified || !description?.verified) return null
+  const fromField = evidence.length > 0 && evidence.every((e) => e.line !== null && e.line === flagged.locator?.line)
+  return fromField ? description.id : null
 }

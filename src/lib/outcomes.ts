@@ -6,6 +6,7 @@
 //   reads labelled rows, so it can't give one test's note to its neighbour.
 // - A quote is kept only if it is at most 15 words and found, after normalize(), in its own
 //   test's row: on that page, after that test's id. Anything else becomes "not-stated".
+import { burnStatus, type Bass2Row } from './audit'
 import type { Outcome, TestOutcome } from './generatedData'
 import { normalize } from './normalize'
 
@@ -181,4 +182,36 @@ export function outcomeView(outcome: TestOutcome, place: AppendixPlace | undefin
     }
   }
   return { outcome: outcome.outcome, quote: outcome.quote, reason: null, place: inAppendix ? (place ?? null) : null }
+}
+
+// What the reader found, set beside the sensors (SPEC F2b). Every number is counted here from
+// bass2.json's rows and test-outcomes.json's outcomes; nothing is typed in.
+
+export interface OutcomeFindings {
+  /** Tests the sensors confirm burned (CO2 rose at least 0.2 %). */
+  burnConfirmed: number
+  /** Tests whose notes describe a sustained flame. */
+  sustained: number
+  /** Tests the app calls "Fire too small for the sensors": SIBAL fabric, readings usable, no burn confirmed. */
+  tooSmall: number
+  /** How many of those the notes describe as a sustained flame. */
+  tooSmallSustained: number
+  /** Sensors confirm a burn, but the notes say brief ignition or no ignition. Test ids, in CSV order. */
+  sensorsYesNotesNo: string[]
+  /** The notes say a sustained flame, but the sensors don't confirm a burn (too small, not confirmed, or unusable). */
+  notesYesSensorsNo: string[]
+}
+
+export function outcomeFindings(rows: readonly Bass2Row[], outcomes: readonly TestOutcome[]): OutcomeFindings {
+  const byId = new Map(outcomes.map((outcome) => [outcome.testId, outcome.outcome]))
+  const of = (row: Bass2Row) => byId.get(row.testId) ?? 'not-stated'
+  const tooSmall = rows.filter((row) => burnStatus(row) === 'too-small')
+  return {
+    burnConfirmed: rows.filter((row) => row.burnConfirmed).length,
+    sustained: rows.filter((row) => of(row) === 'sustained').length,
+    tooSmall: tooSmall.length,
+    tooSmallSustained: tooSmall.filter((row) => of(row) === 'sustained').length,
+    sensorsYesNotesNo: rows.filter((row) => row.burnConfirmed && (of(row) === 'brief' || of(row) === 'no-ignition')).map((row) => row.testId),
+    notesYesSensorsNo: rows.filter((row) => !row.burnConfirmed && of(row) === 'sustained').map((row) => row.testId),
+  }
 }

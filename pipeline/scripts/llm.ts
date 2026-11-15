@@ -77,6 +77,12 @@ const RETRY_DELAYS_MS = [800, 2000]
 const isRateLimit = (error: unknown) =>
   /\b429\b|RESOURCE_EXHAUSTED|rate limit/i.test(error instanceof Error ? error.message : String(error))
 
+/**
+ * A whole day's allowance is spent (Gemini's free tier counts requests per day): waiting a minute
+ * won't help, so a pipeline script stops instead of spending its retries.
+ */
+export const isDailyLimit = (message: string) => /PerDay|requests per day|quota.*\bday\b/i.test(message) && !/tokens per day \(TPD\)/.test(message)
+
 /** The longest a pipeline script waits out one rate limit. */
 export const RATE_LIMIT_MAX_WAIT_MS = 60_000
 
@@ -108,7 +114,9 @@ export async function complete(request: CompleteRequest): Promise<CompleteResult
       return await completeWithin(request)
     } catch (error) {
       if (waited >= (request.rateLimitRetries ?? 0) || !isRateLimit(error)) throw error
-      const wait = rateLimitWaitMs(error instanceof Error ? error.message : String(error))
+      const message = error instanceof Error ? error.message : String(error)
+      if (isDailyLimit(message)) throw error
+      const wait = rateLimitWaitMs(message)
       console.error(`  rate limited: waiting ${Math.round(wait / 1000)} s (try ${waited + 1} of ${request.rateLimitRetries})`)
       await new Promise((resolve) => setTimeout(resolve, wait))
     }

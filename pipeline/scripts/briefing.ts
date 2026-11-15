@@ -32,8 +32,9 @@ async function main() {
     prompt,
     user: JSON.stringify(stats, null, 1),
     jsonSchema: SCHEMA,
-    // Six sentences are about 250 tokens.
-    maxOutputTokens: 500,
+    // Six sentences are about 250 tokens; the rest is room for the model's thinking, which
+    // Gemini counts in the cap.
+    maxOutputTokens: 4_000,
     fresh: process.argv.includes('--fresh'),
   })
   const reply = parseReply<{ sentences?: unknown }>(raw)?.sentences

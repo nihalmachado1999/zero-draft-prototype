@@ -808,6 +808,11 @@ function isBusy(error) {
 }
 var RETRY_DELAYS_MS = [800, 2e3];
 var isRateLimit = (error) => /\b429\b|RESOURCE_EXHAUSTED|rate limit/i.test(error instanceof Error ? error.message : String(error));
+/**
+* A whole day's allowance is spent (Gemini's free tier counts requests per day): waiting a minute
+* won't help, so a pipeline script stops instead of spending its retries.
+*/
+var isDailyLimit = (message) => /PerDay|requests per day|quota.*\bday\b/i.test(message) && !/tokens per day \(TPD\)/.test(message);
 /** The longest a pipeline script waits out one rate limit. */
 var RATE_LIMIT_MAX_WAIT_MS = 6e4;
 /**
@@ -835,7 +840,9 @@ async function complete(request) {
 		return await completeWithin(request);
 	} catch (error) {
 		if (waited >= (request.rateLimitRetries ?? 0) || !isRateLimit(error)) throw error;
-		const wait = rateLimitWaitMs(error instanceof Error ? error.message : String(error));
+		const message = error instanceof Error ? error.message : String(error);
+		if (isDailyLimit(message)) throw error;
+		const wait = rateLimitWaitMs(message);
 		console.error(`  rate limited: waiting ${Math.round(wait / 1e3)} s (try ${waited + 1} of ${request.rateLimitRetries})`);
 		await new Promise((resolve) => setTimeout(resolve, wait));
 	}
@@ -4195,12 +4202,19 @@ var VIEWS = [
 	"interpret"
 ];
 // src/lib/testWall.ts
+var OUTCOME_FILTERS = [
+	"sustained",
+	"brief",
+	"no-ignition",
+	"not-stated"
+];
 var NO_FILTERS = {
 	pi: null,
 	sample: null,
 	flow: null,
 	o2: null,
 	burn: null,
+	outcome: null,
 	audit: null
 };
 var AUDIT_FILTER_LABELS = {
@@ -4216,7 +4230,11 @@ function matchesAudit(row, audit) {
 	if (audit === "clean") return primaryGroup(row) === "clean";
 	return rowInGroup(row, audit);
 }
-function matchesFilters(row, filters) {
+/**
+* Whether a test passes the filters. `outcomes` is each test's AI-read outcome; without it (the
+* file isn't generated, or hasn't loaded) the outcome filter is left out, not failed.
+*/
+function matchesFilters(row, filters, outcomes) {
 	if (filters.pi !== null && row.pi !== filters.pi) return false;
 	if (filters.sample !== null) {
 		if (!(filters.sample.startsWith("family:") ? `family:${sampleFamily(row.sampleType)}` === filters.sample : row.sampleType === filters.sample)) return false;
@@ -4229,6 +4247,7 @@ function matchesFilters(row, filters) {
 	}
 	if (filters.burn === "confirmed" && !row.burnConfirmed) return false;
 	if (filters.burn === "not-confirmed" && row.burnConfirmed) return false;
+	if (filters.outcome !== null && outcomes && (outcomes.get(row.testId) ?? "not-stated") !== filters.outcome) return false;
 	if (filters.audit !== null && !matchesAudit(row, filters.audit)) return false;
 	return true;
 }
@@ -4244,6 +4263,7 @@ function linkFromParams(params) {
 		if (params.sample.startsWith("family:") && params.sample.slice(7) in SAMPLE_FAMILY_LABELS || params.sample in SAMPLE_TYPE_LABELS) filters.sample = params.sample;
 	}
 	if (params.burn === "confirmed" || params.burn === "not-confirmed") filters.burn = params.burn;
+	if (params.outcome && OUTCOME_FILTERS.includes(params.outcome)) filters.outcome = params.outcome;
 	if (Object.keys(filters).length > 0) link.filters = filters;
 	if (params.quarantine === "on") link.quarantine = true;
 	if (params.quarantine === "off") link.quarantine = false;
@@ -4258,6 +4278,7 @@ function paramsFromLink(link) {
 	if (f.flow) params.flow = f.flow;
 	if (f.sample) params.sample = f.sample;
 	if (f.burn) params.burn = f.burn;
+	if (f.outcome) params.outcome = f.outcome;
 	if (link.quarantine !== void 0) params.quarantine = link.quarantine ? "on" : "off";
 	if (link.test) params.test = link.test;
 	return params;

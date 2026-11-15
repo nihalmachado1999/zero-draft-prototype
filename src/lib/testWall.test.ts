@@ -90,6 +90,20 @@ describe('matchesFilters', () => {
     expect(count({ o2: { min: 22.2, max: 22.2 } })).toBe(rows.filter((r) => r.o2InitPct === 22.2).length)
   })
 
+  it('filters by AI-read outcome when the outcomes are loaded, and leaves that filter out when they aren’t', () => {
+    const outcomes = new Map([
+      [rows[0].testId, 'sustained' as const],
+      [rows[1].testId, 'brief' as const],
+    ])
+    const matching = (outcome: 'sustained' | 'brief' | 'not-stated') =>
+      rows.filter((row) => matchesFilters(row, { ...NO_FILTERS, outcome }, outcomes)).map((row) => row.testId)
+    expect(matching('sustained')).toEqual([rows[0].testId])
+    expect(matching('brief')).toEqual([rows[1].testId])
+    // A test with no entry counts as not stated.
+    expect(matching('not-stated')).toHaveLength(rows.length - 2)
+    expect(count({ outcome: 'sustained' })).toBe(rows.length)
+  })
+
   it('combines filters', () => {
     expect(count({ sample: 'family:sibal', burn: 'confirmed' })).toBe(0)
     expect(count({ pi: 'Miller', flow: 'Opposed' })).toBe(20)
@@ -153,6 +167,9 @@ describe('deep links', () => {
       filters: { sample: 'family:rod', flow: 'Opposed', pi: 'Olson' },
     })
     expect(linkFromParams({ sample: 'family:unknown' })).toEqual({})
+    expect(linkFromParams({ outcome: 'no-ignition' })).toEqual({ filters: { outcome: 'no-ignition' } })
+    expect(linkFromParams({ outcome: 'burned' })).toEqual({})
+    expect(paramsFromLink({ filters: { outcome: 'sustained', burn: 'confirmed' } })).toEqual({ burn: 'confirmed', outcome: 'sustained' })
   })
 
   it('writes the same parameters back', () => {

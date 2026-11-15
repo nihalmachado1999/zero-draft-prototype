@@ -2,7 +2,7 @@ import { CircleCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { getSource } from '../../lib/claims'
 import { useInvestigationSummaries } from '../../lib/generatedData'
-import { evidenceClaim, rangeText } from '../../lib/investigationSummaries'
+import { evidenceClaim, platformConflict, rangeText } from '../../lib/investigationSummaries'
 import type { Checked, Evidence, InvestigationSummary } from '../../lib/investigationVerify'
 import { Cite } from '../Cite'
 
@@ -28,7 +28,20 @@ function Quotes({ id, evidence, what }: { id: string; evidence: readonly Evidenc
 }
 
 /** A stated fact with its quotes, or "Not stated" (CLAUDE.md rule 4). */
-function Fact<T>({ id, label, field, children }: { id: string; label: string; field: Checked<T>; children: (value: T) => ReactNode }) {
+function Fact<T>({
+  id,
+  label,
+  field,
+  note,
+  children,
+}: {
+  id: string
+  label: string
+  field: Checked<T>
+  /** Shown under the value: what a reader should know before trusting it. */
+  note?: ReactNode
+  children: (value: T) => ReactNode
+}) {
   return (
     <div className="flex min-w-0 flex-col">
       <dt className="text-xs leading-5 text-muted">{label}</dt>
@@ -41,6 +54,7 @@ function Fact<T>({ id, label, field, children }: { id: string; label: string; fi
             <Quotes id={id} evidence={field.evidence} what={label} />
           </>
         )}
+        {field.value !== null && note && <span className="block text-xs leading-5 text-muted">{note}</span>}
       </dd>
     </div>
   )
@@ -48,12 +62,17 @@ function Fact<T>({ id, label, field, children }: { id: string; label: string; fi
 
 function Investigation({ inv }: { inv: InvestigationSummary }) {
   const source = getSource(inv.id.toLowerCase())
+  const conflict = platformConflict(inv.id, inv.platform.evidence)
   return (
     <article aria-label={inv.acronym.value ?? inv.id} className="flex min-w-0 flex-col gap-3">
       <h3 className="text-sm leading-5">
         <span className="font-semibold">{inv.acronym.value ?? source?.short ?? inv.id}</span>
-        {inv.acronym.value && <Quotes id={inv.id} evidence={inv.acronym.evidence} what="Acronym" />}{' '}
-        <span className="text-muted">{source?.short ?? inv.id}</span>
+        {/* A record with no acronym is headed by its PSI id alone, not by the id twice. */}
+        {inv.acronym.value && (
+          <>
+            <Quotes id={inv.id} evidence={inv.acronym.evidence} what="Acronym" /> <span className="text-muted">{source?.short ?? inv.id}</span>
+          </>
+        )}
         {inv.title.value && (
           <span className="block text-muted">
             {inv.title.value}
@@ -62,7 +81,20 @@ function Investigation({ inv }: { inv: InvestigationSummary }) {
         )}
       </h3>
       <dl className="grid grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] gap-x-4">
-        <Fact id={inv.id} label="Platform" field={inv.platform}>
+        <Fact
+          id={inv.id}
+          label="Platform"
+          field={inv.platform}
+          note={
+            conflict && (
+              <>
+                This is the record’s Flight Platform field. Its own description says it ran on a Cygnus after leaving
+                the ISS
+                <Cite id={conflict} />: see the record inconsistencies below.
+              </>
+            )
+          }
+        >
           {(value) => value}
         </Fact>
         <Fact id={inv.id} label="Tested O2" field={inv.o2Pct}>

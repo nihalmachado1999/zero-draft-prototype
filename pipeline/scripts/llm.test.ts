@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { RATE_LIMIT_MAX_WAIT_MS, rateLimitWaitMs } from './llm'
+import { isDailyLimit, RATE_LIMIT_MAX_WAIT_MS, rateLimitWaitMs } from './llm'
 
 describe('rateLimitWaitMs (pipeline scripts only)', () => {
   it('waits what the provider asks, plus a second', () => {
@@ -15,5 +15,16 @@ describe('rateLimitWaitMs (pipeline scripts only)', () => {
 
   it('waits 30 s when the reply does not say how long', () => {
     expect(rateLimitWaitMs('429 Too Many Requests')).toBe(30_000)
+  })
+})
+
+describe('isDailyLimit (pipeline scripts only)', () => {
+  it('knows a spent daily request allowance from a per-minute limit', () => {
+    expect(isDailyLimit('429 RESOURCE_EXHAUSTED quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit: 20')).toBe(true)
+    expect(isDailyLimit('429 RESOURCE_EXHAUSTED quotaId: GenerateRequestsPerMinutePerProjectPerModel-FreeTier. Please retry in 34s')).toBe(false)
+  })
+
+  it('still waits on Groq’s tokens-per-day bucket, which refills by the minute', () => {
+    expect(isDailyLimit('429 from Groq: Rate limit reached on tokens per day (TPD): Limit 200000. Please try again in 10m52s.')).toBe(false)
   })
 })

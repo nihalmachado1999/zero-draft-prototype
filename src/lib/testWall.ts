@@ -23,6 +23,7 @@ import {
   type SampleFamily,
   type SampleType,
 } from './audit'
+import type { Outcome } from './generatedData'
 import type { RouteParams } from './route'
 
 /** Tiles across in each PI's block of the wall. */
@@ -56,6 +57,9 @@ export function wallColumns(rows: readonly Bass2Row[]): WallColumn[] {
 export type AuditFilter = AuditGroup | 'o2-usable' | 'clean'
 export type FlowFilter = FlowConfig | 'not-stated'
 export type BurnFilter = 'confirmed' | 'not-confirmed'
+/** What NASA's notes say the flame did, as the AI read them (SPEC F2b). */
+export type OutcomeFilter = Outcome
+export const OUTCOME_FILTERS: readonly OutcomeFilter[] = ['sustained', 'brief', 'no-ignition', 'not-stated']
 export type SampleFilter = SampleType | `family:${SampleFamily}`
 
 export interface TestFilters {
@@ -65,11 +69,13 @@ export interface TestFilters {
   /** Initial O2 range, % (inclusive). */
   o2: { min: number; max: number } | null
   burn: BurnFilter | null
+  /** Needs the AI-read outcomes; ignored while they aren't loaded. */
+  outcome: OutcomeFilter | null
   /** Set from the audit bar. */
   audit: AuditFilter | null
 }
 
-export const NO_FILTERS: TestFilters = { pi: null, sample: null, flow: null, o2: null, burn: null, audit: null }
+export const NO_FILTERS: TestFilters = { pi: null, sample: null, flow: null, o2: null, burn: null, outcome: null, audit: null }
 
 export const AUDIT_FILTER_LABELS: Record<AuditFilter, string> = {
   quarantined: 'Quarantined',
@@ -99,7 +105,11 @@ export function matchesAudit(row: Bass2Row, audit: AuditFilter): boolean {
   return rowInGroup(row, audit)
 }
 
-export function matchesFilters(row: Bass2Row, filters: TestFilters): boolean {
+/**
+ * Whether a test passes the filters. `outcomes` is each test's AI-read outcome; without it (the
+ * file isn't generated, or hasn't loaded) the outcome filter is left out, not failed.
+ */
+export function matchesFilters(row: Bass2Row, filters: TestFilters, outcomes?: ReadonlyMap<string, Outcome>): boolean {
   if (filters.pi !== null && row.pi !== filters.pi) return false
   if (filters.sample !== null) {
     const ok = filters.sample.startsWith('family:')
@@ -116,6 +126,7 @@ export function matchesFilters(row: Bass2Row, filters: TestFilters): boolean {
   }
   if (filters.burn === 'confirmed' && !row.burnConfirmed) return false
   if (filters.burn === 'not-confirmed' && row.burnConfirmed) return false
+  if (filters.outcome !== null && outcomes && (outcomes.get(row.testId) ?? 'not-stated') !== filters.outcome) return false
   if (filters.audit !== null && !matchesAudit(row, filters.audit)) return false
   return true
 }
@@ -210,6 +221,7 @@ export function linkFromParams(params: RouteParams): SummarizeLink {
     if (family || params.sample in SAMPLE_TYPE_LABELS) filters.sample = params.sample as SampleFilter
   }
   if (params.burn === 'confirmed' || params.burn === 'not-confirmed') filters.burn = params.burn
+  if (params.outcome && (OUTCOME_FILTERS as readonly string[]).includes(params.outcome)) filters.outcome = params.outcome as OutcomeFilter
   if (Object.keys(filters).length > 0) link.filters = filters
   if (params.quarantine === 'on') link.quarantine = true
   if (params.quarantine === 'off') link.quarantine = false
@@ -225,6 +237,7 @@ export function paramsFromLink(link: SummarizeLink): RouteParams {
   if (f.flow) params.flow = f.flow
   if (f.sample) params.sample = f.sample
   if (f.burn) params.burn = f.burn
+  if (f.outcome) params.outcome = f.outcome
   if (link.quarantine !== undefined) params.quarantine = link.quarantine ? 'on' : 'off'
   if (link.test) params.test = link.test
   return params
