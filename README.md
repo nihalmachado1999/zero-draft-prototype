@@ -137,7 +137,7 @@ ORCA_API_KEY=your OrcaRouter key
 ORCA_MODEL=deepseek/deepseek-v4.1-flash-free
 ```
 
-The app uses the first provider whose keys are set: OrcaRouter (`ORCA_API_KEY` and `ORCA_MODEL`), then Groq (`GROQ_API_KEY` and `GROQ_MODEL`, e.g. `openai/gpt-oss-120b`), then Gemini (`GEMINI_API_KEY` and `GEMINI_MODEL`). It does not switch providers when a call fails. Set `ORCA_MODEL` to an exact model id, not `orcarouter/auto` or `orcarouter/free`: those can change the model between calls, and every generated file records the model that wrote it. To re-run the pipeline on Gemini, as the shipped files were, leave the OrcaRouter and Groq values empty.
+The app uses the first provider whose keys are set: OrcaRouter (`ORCA_API_KEY` and `ORCA_MODEL`), then Groq (`GROQ_API_KEY` and `GROQ_MODEL`, e.g. `openai/gpt-oss-120b`), then Gemini (`GEMINI_API_KEY` and `GEMINI_MODEL`). If a call to one fails (rate limit, no credits, outage), the app tries the next one that has keys set, and the model recorded with the answer is the one that answered. Set `ORCA_MODEL` to an exact model id, not `orcarouter/auto` or `orcarouter/free`: those can change the model between calls, and every generated file records the model that wrote it. To re-run the pipeline on Gemini only, as the shipped files were, leave the OrcaRouter and Groq values empty: otherwise a pipeline run can be written by any of them, and each file records which.
 
 ```bash
 npm run dev
@@ -155,12 +155,12 @@ npm run dev
 ## Deploy on Vercel
 
 1. Import the GitHub repository in Vercel. The framework preset is **Vite**: build command `npm run build`, output directory `dist`.
-2. In **Project → Settings → Environment Variables**, add `ORCA_API_KEY` and `ORCA_MODEL` (`deepseek/deepseek-v4.1-flash-free`). Without them the endpoint uses Groq (`GROQ_API_KEY`, `GROQ_MODEL`), then Gemini.
+2. In **Project → Settings → Environment Variables**, add `ORCA_API_KEY` and `ORCA_MODEL` (`deepseek/deepseek-v4.1-flash-free`). Without them the endpoint uses Groq (`GROQ_API_KEY`, `GROQ_MODEL`), then Gemini; with several set it tries them in that order.
 3. Deploy. `vercel.json` gives the `/api/lab-partner` function 60 s for its two LLM calls.
 4. Check it:
    - Open `/api/lab-partner` in a browser. It should say `{"error":"Ask with POST."}`.
    - Open the site, open Lab Partner and ask a question. A tool line and checked sentences should appear.
-5. **Limits**: OrcaRouter's free model can be rate-limited or withdrawn, and the app does not fall back to Groq on an error. If it matters on demo day, deploy with Groq's keys instead. Groq's free tier allows 1,000 requests a day but 8,000 tokens a minute, about one live question a minute for everyone. The cached suggested questions don't count against it.
+5. **Limits**: OrcaRouter's free model can be rate-limited or withdrawn. With the Groq keys set too, a failed OrcaRouter call falls back to Groq, so add `GROQ_API_KEY` and `GROQ_MODEL` as well. Groq's free tier allows 1,000 requests a day but 8,000 tokens a minute, about one live question a minute for everyone. The cached suggested questions don't count against it.
 
 ## Known limitations
 

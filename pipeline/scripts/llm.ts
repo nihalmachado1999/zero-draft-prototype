@@ -1,13 +1,14 @@
 // The one module that talks to an LLM (SPEC §7.3). The pipeline scripts and api/ call complete()
 // from here; nothing else knows which provider answers.
 //
-// Which provider answers, first match wins:
+// Which provider answers: the first of these whose keys are set, and if its call fails, the next:
 // - OrcaRouter, when ORCA_API_KEY and ORCA_MODEL are both set. ORCA_MODEL is an exact model id
 //   (deepseek/deepseek-v4.1-flash-free), never a router alias like orcarouter/auto or
 //   orcarouter/free, which can change the model between calls. OpenAI-style HTTP API, plain fetch.
 // - Groq, when GROQ_API_KEY is set: GROQ_API_KEY and GROQ_MODEL (e.g. openai/gpt-oss-120b), through
 //   Groq's OpenAI-style HTTP API with plain fetch.
-// - Otherwise Gemini: GEMINI_API_KEY and GEMINI_MODEL, through @google/genai (only imported here).
+// - Gemini, when GEMINI_API_KEY is set (or when nothing is set): GEMINI_API_KEY and GEMINI_MODEL,
+//   through @google/genai (only imported here).
 // Keys and models come from .env.local on this machine (scripts call loadLocalEnv()) and Vercel's
 // environment variables when deployed. No model name is hardcoded.
 import { existsSync } from 'node:fs'
@@ -102,21 +103,63 @@ export function rateLimitWaitMs(message: string): number {
   return Math.min(RATE_LIMIT_MAX_WAIT_MS, Math.max(1_000, Math.ceil(asked) + 1_000))
 }
 
-/** Which provider answers: OrcaRouter when its key and model are set, else Groq when its key is set, else Gemini. */
-export function provider(env: Record<string, string | undefined> = process.env): 'orca' | 'groq' | 'gemini' {
-  if (env.ORCA_API_KEY?.trim() && env.ORCA_MODEL?.trim()) return 'orca'
-  return env.GROQ_API_KEY?.trim() ? 'groq' : 'gemini'
+export type ProviderName = 'orca' | 'groq' | 'gemini'
+
+const LABELS: Record<ProviderName, string> = { orca: 'OrcaRouter', groq: 'Groq', gemini: 'Gemini' }
+
+/**
+ * The providers that can be tried, in order: OrcaRouter when its key and model are set, Groq when
+ * its key is set, Gemini when its key is set. With none set, Gemini alone, so the error says what to set.
+ */
+export function providers(env: Record<string, string | undefined> = process.env): ProviderName[] {
+  const list: ProviderName[] = []
+  if (env.ORCA_API_KEY?.trim() && env.ORCA_MODEL?.trim()) list.push('orca')
+  if (env.GROQ_API_KEY?.trim()) list.push('groq')
+  if (env.GEMINI_API_KEY?.trim() || list.length === 0) list.push('gemini')
+  return list
+}
+
+/** The provider tried first. */
+export function provider(env: Record<string, string | undefined> = process.env): ProviderName {
+  return providers(env)[0]
 }
 
 /**
- * One call to the LLM. A busy reply (503, 429) is retried twice, after 0.8 s and 2 s, as long as
- * the call's time limit allows; any other error is thrown at once. A pipeline script can also
- * ask to wait out rate limits (rateLimitRetries).
+ * One call to the LLM, on the first provider that answers. A provider that fails (any error, after
+ * its own short retries) hands the call to the next one, and the result's `model` names whichever
+ * answered. A provider with another behind it gets at most half the time left, and does not wait
+ * out a rate limit: only the last one does (when the script asks, rateLimitRetries).
  */
 export async function complete(request: CompleteRequest): Promise<CompleteResult> {
+  const names = providers()
+  const deadline = Date.now() + (request.timeoutMs ?? 60_000)
+  const failures: string[] = []
+  let lastError: unknown
+  for (const [index, name] of names.entries()) {
+    const isLast = index === names.length - 1
+    const remaining = Math.max(1_000, deadline - Date.now())
+    try {
+      return await completeWith(
+        isLast ? { ...request, timeoutMs: remaining } : { ...request, timeoutMs: Math.ceil(remaining / 2), rateLimitRetries: 0 },
+        name,
+      )
+    } catch (error) {
+      lastError = error
+      const message = error instanceof Error ? error.message : String(error)
+      failures.push(`${LABELS[name]}: ${message}`)
+      if (!isLast) console.error(`  ${LABELS[name]} failed, trying ${LABELS[names[index + 1]]}: ${message.slice(0, 200)}`)
+    }
+  }
+  // One provider: its own error, as before. Several: all of them, so the log says what each said.
+  if (names.length === 1) throw lastError
+  throw new Error(`All LLM providers failed. ${failures.join(' | ')}`)
+}
+
+/** One provider: its short retries, and for a pipeline script the wait on a rate limit. */
+async function completeWith(request: CompleteRequest, name: ProviderName): Promise<CompleteResult> {
   for (let waited = 0; ; waited++) {
     try {
-      return await completeWithin(request)
+      return await completeWithin(request, name)
     } catch (error) {
       if (waited >= (request.rateLimitRetries ?? 0) || !isRateLimit(error)) throw error
       const message = error instanceof Error ? error.message : String(error)
@@ -128,12 +171,12 @@ export async function complete(request: CompleteRequest): Promise<CompleteResult
   }
 }
 
-/** One call with its short retries, inside one time limit. */
-async function completeWithin(request: CompleteRequest): Promise<CompleteResult> {
+/** One call with its short retries, inside one time limit. A busy reply (503, 429) is retried twice, after 0.8 s and 2 s. */
+async function completeWithin(request: CompleteRequest, name: ProviderName): Promise<CompleteResult> {
   const deadline = Date.now() + (request.timeoutMs ?? 60_000)
   for (let attempt = 0; ; attempt++) {
     try {
-      return await completeOnce({ ...request, timeoutMs: Math.max(1_000, deadline - Date.now()) })
+      return await completeOnce({ ...request, timeoutMs: Math.max(1_000, deadline - Date.now()) }, name)
     } catch (error) {
       const wait = RETRY_DELAYS_MS[attempt]
       if (wait === undefined || !isBusy(error) || Date.now() + wait > deadline - 1_000) throw error
@@ -142,8 +185,8 @@ async function completeWithin(request: CompleteRequest): Promise<CompleteResult>
   }
 }
 
-function completeOnce(request: CompleteRequest): Promise<CompleteResult> {
-  switch (provider()) {
+function completeOnce(request: CompleteRequest, name: ProviderName): Promise<CompleteResult> {
+  switch (name) {
     case 'orca':
       return completeChat(request, { label: 'OrcaRouter', url: ORCA_URL, key: requireEnv('ORCA_API_KEY'), model: requireEnv('ORCA_MODEL') })
     case 'groq':

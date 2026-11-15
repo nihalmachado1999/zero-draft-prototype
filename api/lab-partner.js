@@ -826,19 +826,59 @@ function rateLimitWaitMs(message) {
 	const asked = match && h + m + sec + ms > 0 ? h * 36e5 + m * 6e4 + sec * 1e3 + ms : 29e3;
 	return Math.min(RATE_LIMIT_MAX_WAIT_MS, Math.max(1e3, Math.ceil(asked) + 1e3));
 }
-/** Which provider answers: OrcaRouter when its key and model are set, else Groq when its key is set, else Gemini. */
-function provider(env = process.env) {
-	if (env.ORCA_API_KEY?.trim() && env.ORCA_MODEL?.trim()) return "orca";
-	return env.GROQ_API_KEY?.trim() ? "groq" : "gemini";
+var LABELS = {
+	orca: "OrcaRouter",
+	groq: "Groq",
+	gemini: "Gemini"
+};
+/**
+* The providers that can be tried, in order: OrcaRouter when its key and model are set, Groq when
+* its key is set, Gemini when its key is set. With none set, Gemini alone, so the error says what to set.
+*/
+function providers(env = process.env) {
+	const list = [];
+	if (env.ORCA_API_KEY?.trim() && env.ORCA_MODEL?.trim()) list.push("orca");
+	if (env.GROQ_API_KEY?.trim()) list.push("groq");
+	if (env.GEMINI_API_KEY?.trim() || list.length === 0) list.push("gemini");
+	return list;
 }
 /**
-* One call to the LLM. A busy reply (503, 429) is retried twice, after 0.8 s and 2 s, as long as
-* the call's time limit allows; any other error is thrown at once. A pipeline script can also
-* ask to wait out rate limits (rateLimitRetries).
+* One call to the LLM, on the first provider that answers. A provider that fails (any error, after
+* its own short retries) hands the call to the next one, and the result's `model` names whichever
+* answered. A provider with another behind it gets at most half the time left, and does not wait
+* out a rate limit: only the last one does (when the script asks, rateLimitRetries).
 */
 async function complete(request) {
+	const names = providers();
+	const deadline = Date.now() + (request.timeoutMs ?? 6e4);
+	const failures = [];
+	let lastError;
+	for (const [index, name] of names.entries()) {
+		const isLast = index === names.length - 1;
+		const remaining = Math.max(1e3, deadline - Date.now());
+		try {
+			return await completeWith(isLast ? {
+				...request,
+				timeoutMs: remaining
+			} : {
+				...request,
+				timeoutMs: Math.ceil(remaining / 2),
+				rateLimitRetries: 0
+			}, name);
+		} catch (error) {
+			lastError = error;
+			const message = error instanceof Error ? error.message : String(error);
+			failures.push(`${LABELS[name]}: ${message}`);
+			if (!isLast) console.error(`  ${LABELS[name]} failed, trying ${LABELS[names[index + 1]]}: ${message.slice(0, 200)}`);
+		}
+	}
+	if (names.length === 1) throw lastError;
+	throw new Error(`All LLM providers failed. ${failures.join(" | ")}`);
+}
+/** One provider: its short retries, and for a pipeline script the wait on a rate limit. */
+async function completeWith(request, name) {
 	for (let waited = 0;; waited++) try {
-		return await completeWithin(request);
+		return await completeWithin(request, name);
 	} catch (error) {
 		if (waited >= (request.rateLimitRetries ?? 0) || !isRateLimit(error)) throw error;
 		const message = error instanceof Error ? error.message : String(error);
@@ -848,22 +888,22 @@ async function complete(request) {
 		await new Promise((resolve) => setTimeout(resolve, wait));
 	}
 }
-/** One call with its short retries, inside one time limit. */
-async function completeWithin(request) {
+/** One call with its short retries, inside one time limit. A busy reply (503, 429) is retried twice, after 0.8 s and 2 s. */
+async function completeWithin(request, name) {
 	const deadline = Date.now() + (request.timeoutMs ?? 6e4);
 	for (let attempt = 0;; attempt++) try {
 		return await completeOnce({
 			...request,
 			timeoutMs: Math.max(1e3, deadline - Date.now())
-		});
+		}, name);
 	} catch (error) {
 		const wait = RETRY_DELAYS_MS[attempt];
 		if (wait === void 0 || !isBusy(error) || Date.now() + wait > deadline - 1e3) throw error;
 		await new Promise((resolve) => setTimeout(resolve, wait));
 	}
 }
-function completeOnce(request) {
-	switch (provider()) {
+function completeOnce(request, name) {
+	switch (name) {
 		case "orca": return completeChat(request, {
 			label: "OrcaRouter",
 			url: ORCA_URL,

@@ -890,7 +890,7 @@ all source text -- chunks.ts --> api/_data/chunks.json                          
 ### 7.3 Provider: OrcaRouter first, then Groq, then Gemini
 
 - OrcaRouter when `ORCA_API_KEY` and `ORCA_MODEL` are both set (`deepseek/deepseek-v4.1-flash-free`), through its OpenAI-style chat completions API with plain `fetch` (the same code as Groq's). `ORCA_MODEL` is an exact model id, never a router alias, so the `model` recorded in every generated file is stable. For `thinkingLevel: MINIMAL` (Lab Partner) it sends `thinking: { type: "disabled" }`, because DeepSeek's thinking counts against the 400-token answer cap and left answers empty; other levels send `reasoning_effort`.
-- The provider is chosen once per call from which keys are set. There is no failover when a call fails.
+- Every provider with keys set is tried in order, OrcaRouter, Groq, Gemini. A call that fails (any error, after its own two short retries) falls through to the next, and the result's `model` names the one that answered. A provider with another behind it gets at most half the time left and does not wait out a rate limit. If all fail, the error lists what each said. With one provider set, its own error is thrown as before.
 - Groq when `GROQ_API_KEY` is set and OrcaRouter is not: `GROQ_API_KEY` and `GROQ_MODEL` (`openai/gpt-oss-120b`), through Groq's OpenAI-style chat completions API with plain `fetch` (no SDK). Function calling for the tools, `json_schema` output for answers, `reasoning_effort: low`.
 - Otherwise Gemini, as below.
 - SDK: `@google/genai` (3.0 at the time of writing; needs Node 22 or newer).

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { isDailyLimit, orcaReasoning, provider, RATE_LIMIT_MAX_WAIT_MS, rateLimitWaitMs } from './llm'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { complete, isDailyLimit, orcaReasoning, provider, providers, RATE_LIMIT_MAX_WAIT_MS, rateLimitWaitMs } from './llm'
 
 describe('provider priority', () => {
   const orca = { ORCA_API_KEY: 'k', ORCA_MODEL: 'deepseek/deepseek-v4.1-flash-free' }
@@ -62,5 +62,104 @@ describe('orcaReasoning', () => {
     expect(orcaReasoning('MEDIUM')).toEqual({ reasoning_effort: 'medium' })
     expect(orcaReasoning('HIGH')).toEqual({ reasoning_effort: 'high' })
     expect(orcaReasoning(undefined)).toEqual({})
+  })
+})
+
+describe('providers (the order they are tried)', () => {
+  const orca = { ORCA_API_KEY: 'k', ORCA_MODEL: 'deepseek/deepseek-v4.1-flash-free' }
+  const groq = { GROQ_API_KEY: 'k', GROQ_MODEL: 'openai/gpt-oss-120b' }
+  const gemini = { GEMINI_API_KEY: 'k', GEMINI_MODEL: 'gemini-3.5-flash' }
+
+  it('lists every provider with keys set: OrcaRouter, then Groq, then Gemini', () => {
+    expect(providers({ ...gemini, ...groq, ...orca })).toEqual(['orca', 'groq', 'gemini'])
+    expect(providers({ ...orca, ...gemini })).toEqual(['orca', 'gemini'])
+    expect(providers(groq)).toEqual(['groq'])
+  })
+
+  it('lists Gemini alone when nothing is set, so the error says what to set', () => {
+    expect(providers({})).toEqual(['gemini'])
+    expect(provider({})).toBe('gemini')
+  })
+})
+
+describe('complete falls back to the next provider', () => {
+  const chat = (model: string, content = 'ok') =>
+    new Response(JSON.stringify({ model, choices: [{ finish_reason: 'stop', message: { content } }] }), { status: 200 })
+  const fail = (status: number, text: string) => new Response(text, { status })
+
+  function setEnv(names: string[]) {
+    const all: Record<string, string> = {
+      ORCA_API_KEY: 'ok', ORCA_MODEL: 'deepseek/deepseek-v4.1-flash-free',
+      GROQ_API_KEY: 'gk', GROQ_MODEL: 'openai/gpt-oss-120b',
+      GEMINI_API_KEY: '', GEMINI_MODEL: '',
+    }
+    for (const [key, value] of Object.entries(all)) vi.stubEnv(key, names.includes(key.split('_')[0].toLowerCase()) ? value : '')
+  }
+  const request = { system: 's', user: 'u', timeoutMs: 10_000 }
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('answers from OrcaRouter and never calls Groq when OrcaRouter works', async () => {
+    setEnv(['orca', 'groq'])
+    const fetchMock = vi.fn().mockResolvedValueOnce(chat('deepseek/deepseek-v4.1-flash-free'))
+    vi.stubGlobal('fetch', fetchMock)
+    const result = await complete(request)
+    expect(result.model).toBe('deepseek/deepseek-v4.1-flash-free')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(String(fetchMock.mock.calls[0][0])).toContain('orcarouter.ai')
+  })
+
+  it('falls back to Groq when OrcaRouter fails, and the result names the model that answered', async () => {
+    setEnv(['orca', 'groq'])
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(fail(402, 'out of credits'))
+      .mockResolvedValueOnce(chat('openai/gpt-oss-120b'))
+    vi.stubGlobal('fetch', fetchMock)
+    const result = await complete(request)
+    expect(result.model).toBe('openai/gpt-oss-120b')
+    expect(result.text).toBe('ok')
+    expect(fetchMock.mock.calls.map((call) => String(call[0]))).toEqual([
+      'https://api.orcarouter.ai/v1/chat/completions',
+      'https://api.groq.com/openai/v1/chat/completions',
+    ])
+  })
+
+  it('falls back when OrcaRouter is unreachable', async () => {
+    setEnv(['orca', 'groq'])
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValueOnce(new TypeError('fetch failed')).mockResolvedValueOnce(chat('openai/gpt-oss-120b')))
+    expect((await complete(request)).model).toBe('openai/gpt-oss-120b')
+  })
+
+  it('does not wait out a rate limit on a provider that has a fallback behind it', async () => {
+    setEnv(['orca', 'groq'])
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(fail(500, 'Rate limit reached. Please try again in 50s'))
+      .mockResolvedValueOnce(chat('openai/gpt-oss-120b'))
+    vi.stubGlobal('fetch', fetchMock)
+    const started = Date.now()
+    await complete({ ...request, rateLimitRetries: 2 })
+    expect(Date.now() - started).toBeLessThan(2_000)
+  })
+
+  it('throws one error naming every provider when all of them fail', async () => {
+    setEnv(['orca', 'groq'])
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(fail(402, 'out of credits'))
+      .mockResolvedValueOnce(fail(401, 'bad key')))
+    await expect(complete(request)).rejects.toThrow(/All LLM providers failed.*OrcaRouter.*402.*Groq.*401/s)
+  })
+
+  it('with one provider, throws that provider’s own error', async () => {
+    setEnv(['groq'])
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(fail(401, 'bad key')))
+    await expect(complete(request)).rejects.toThrow(/^401 from Groq: bad key/)
   })
 })
